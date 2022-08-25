@@ -1,0 +1,7 @@
+example of using workspaces in rust:
+
+https://github.com/Miosso/rust-workspace
+
+more ideas
+
+https://kerkour.com/rust-large-cargo-workspace
