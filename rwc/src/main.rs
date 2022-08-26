@@ -2,10 +2,18 @@
 //! 
 //! Counts words, bytes, and lines from a file or from the pipeline.
 
-use std::env::current_exe;
+use std::env::{current_exe, args};
+use std::io::Error;
 
-fn main() {
-    usage();
+fn main() -> Result<(), Error> {
+    let args : Vec<String> = args().collect();
+    if args.len() == 1 {
+        usage();
+    } else {
+        println!("args: {:?}", args);
+    }
+
+    Ok(())
 }
 
 fn usage() {
