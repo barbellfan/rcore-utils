@@ -119,6 +119,18 @@
         "kind": "build",
         "isDefault": true
       }
-    }
+    },
+    {
+      "label": "cargo doc",
+      "type": "shell",
+      "command": "cargo",
+      "args": [
+        "doc"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
   ]
 }
