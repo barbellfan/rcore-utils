@@ -5,6 +5,7 @@
 use std::env::{current_exe, args};
 use std::io::Error;
 
+/// Entry point for the program.
 fn main() -> Result<(), Error> {
     let args : Vec<String> = args().collect();
     if args.len() == 1 {
@@ -16,11 +17,16 @@ fn main() -> Result<(), Error> {
     Ok(())
 }
 
+/// Display usage directions. Should be the same as or very
+/// similar to the standard wc command.
 fn usage() {
     let curr_ex = get_current_exe_name().unwrap();
     println!("current exe name: {}", curr_ex);
 }
 
+/// Get the name of the current executable. By default,
+/// it will be wc (wc.exe on Windows). Used by the usage()
+/// function for display.
 fn get_current_exe_name() -> Option<String> {
     current_exe()
         .ok()?
