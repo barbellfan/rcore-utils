@@ -115,7 +115,7 @@ This project is a version of the classic Unix core-utils apps written in Rust.
 | uptime | X | | |
 | users | X | | |
 | vdir | X | | |
-| wc | X | | |
+| wc | | X | |
 | who | X | | |
 | whoami | X | | |
 | yes| X | | |
