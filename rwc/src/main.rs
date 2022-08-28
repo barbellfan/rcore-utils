@@ -37,6 +37,39 @@ struct FileSummary {
     file_name: String,
 }
 
+/// TO DO
+/// Print a file summary to standard out like the original wc command.
+/// 
+/// This means the following:
+/// * Calculate the value with the longest number of chars, and
+/// pad to that length.
+/// * Then separate each value by one character.
+/// * Right justify the numbers.
+/// 
+/// If there is more than one file, check the length of each file's
+/// values. The format! macro has justify and padding options, and include
+/// a total line at the end.
+/// 
+/// This makes a nice output like this:
+/// ```
+/// :~$ wc .xsession-errors .xsession-errors.old .xinputrc
+///    87   627  7695 .xsession-errors
+///   118   881 10564 .xsession-errors.old
+///     3    17   131 .xinputrc
+///   208  1525 18390 total
+/// ```
+/// For missing files, write the output like this:
+/// ```
+/// :~$ wc .xsession-errors .xsession-errors.old .xinpur
+///    87   627  7695 .xsession-errors
+///   118   881 10564 .xsession-errors.old
+/// wc: .xinputr: No such file or directory
+///   208  1525 18390 total
+/// ```
+/// # Arguments
+/// 
+/// * `summary` - a FileSummary object (soon to be a collection of them) containing
+/// the files to print to std out.
 fn print_summary(summary: FileSummary) {
     println!("{}\t{}\t{}\t{}", summary.lines, summary.words, summary.chars, summary.file_name);
 }
