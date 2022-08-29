@@ -3,6 +3,7 @@
 //! Counts words, bytes, and lines from a file or from the pipeline.
 
 use std::env::{current_exe, args};
+//use std::error::Error;
 use std::io::Error;
 use std::fs;
 
@@ -11,19 +12,31 @@ fn main() -> Result<(), Error> {
     let args : Vec<String> = args().collect();
     if args.len() == 1 { // should always be length 1 if no args given
         usage();
-    } else {
-        let file_path = &args[1];
+        return Ok(())
+    }
+
+    let mut summaries: Vec<FileSummary> = Vec::new();
+    let mut file_errors: Vec<String> = Vec::new();
+
+    let file_names = &args[1..];
+    for file_path in file_names.iter() {
         let contents = fs::read_to_string(file_path);
         match contents {
             Ok(c) => {
                 let mut summary = handle_file_contents(c);
                 summary.file_name = file_path.to_owned();
-                print_summary(summary);
+                summaries.push(summary);
             },
-            Err(e) => println!("error: {:?}", e),
+            Err(e) => file_errors.push(format!("{}: {}", e.to_string(), file_path)),
         };
+    }
 
-        //println!("contents of file:\n{}", contents);
+    for fs in summaries.iter() {
+        print_summary(fs);
+    }
+
+    for fe in file_errors.iter() {
+        println!("Error: {}", fe);
     }
 
     Ok(())
@@ -70,7 +83,7 @@ struct FileSummary {
 /// 
 /// * `summary` - a FileSummary object (soon to be a collection of them) containing
 /// the files to print to std out.
-fn print_summary(summary: FileSummary) {
+fn print_summary(summary: &FileSummary) {
     println!("{}\t{}\t{}\t{}", summary.lines, summary.words, summary.chars, summary.file_name);
 }
 
