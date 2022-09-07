@@ -2,6 +2,7 @@ use std::io::Error;
 use std::fs;
 use std::cmp::max;
 
+/// Count words, lines, and bytes in the given files.
 pub fn wc(args: Vec<String>) -> Result<(), Error> {
     let mut summaries: Vec<FileSummary> = Vec::new();
     let mut file_errors: Vec<String> = Vec::new();
@@ -55,7 +56,7 @@ pub fn wc(args: Vec<String>) -> Result<(), Error> {
     Ok(())
 }
 
-    /// Struct that contains info about the files that wc is told to get info about.
+/// Struct that contains info about the files that wc is told to get info about.
 #[derive(Debug)]
 struct FileSummary {
     /// Number of lines found in the file
@@ -68,7 +69,6 @@ struct FileSummary {
     label: String, 
 }
 
-/// TO DO
 /// Print a file summary to standard out like the original wc command.
 /// 
 /// This means the following:
@@ -105,6 +105,7 @@ fn print_summary(summary: &FileSummary, padding: usize) {
     println!("{:>padding$} {:>padding$} {:>padding$} {:>padding$}", summary.lines, summary.words, summary.chars, summary.label);
 }
 
+/// Utility function to count lines, words, and characters in the given file. Save to a FileSummary struct.
 fn handle_file_contents(contents: String) -> FileSummary {
     let mut fs = FileSummary { 
         lines: 0, 

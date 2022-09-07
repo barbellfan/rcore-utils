@@ -3,7 +3,6 @@
 //! Counts words, bytes, and lines from a file or from the pipeline.
 
 use std::env::{current_exe, args};
-//use std::error::Error;
 use std::io::Error;
 
 mod wc; 
