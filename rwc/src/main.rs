@@ -6,6 +6,7 @@ use std::env::{current_exe, args};
 //use std::error::Error;
 use std::io::Error;
 use std::fs;
+use std::cmp::max;
 
 /// Entry point for the program.
 fn main() -> Result<(), Error> {
@@ -24,15 +25,40 @@ fn main() -> Result<(), Error> {
         match contents {
             Ok(c) => {
                 let mut summary = handle_file_contents(c);
-                summary.file_name = file_path.to_owned();
+                summary.label = file_path.to_owned();
                 summaries.push(summary);
             },
             Err(e) => file_errors.push(format!("{}: {}", e.to_string(), file_path)),
         };
     }
 
+    // get longest number so you can set the amount of padding
+    // also get a running total of all lines, words, and chars
+    let mut max_len = 0;
+    let mut total_summary = FileSummary {
+        lines: 0,
+        words: 0,
+        chars: 0,
+        label: "total".to_owned(),
+    };
+
+    for file_summary in summaries.iter() {
+        // make totals
+        total_summary.lines += file_summary.lines;
+        total_summary.words += file_summary.words;
+        total_summary.chars += file_summary.chars;
+
+        // get longest number
+        max_len = max(max_len, file_summary.lines.to_string().len());
+        max_len = max(max_len, file_summary.words.to_string().len());
+        max_len = max(max_len, file_summary.chars.to_string().len());
+    }
+    if summaries.len() > 1 {
+        summaries.push(total_summary);
+    }
+
     for fs in summaries.iter() {
-        print_summary(fs);
+        print_summary(fs, max_len);
     }
 
     for fe in file_errors.iter() {
@@ -42,12 +68,17 @@ fn main() -> Result<(), Error> {
     Ok(())
 }
 
+/// Struct that contains info about the files that wc is told to get info about.
 #[derive(Debug)]
 struct FileSummary {
+    /// Number of lines found in the file
     lines: usize,
-    words: usize,
-    chars: usize,
-    file_name: String,
+    /// Number of words found in the file.
+    words: usize, 
+    /// Number of characters found in the file.
+    chars: usize, 
+    /// Label for thing being counted. Is either the file name or the total.
+    label: String, 
 }
 
 /// TO DO
@@ -83,8 +114,8 @@ struct FileSummary {
 /// 
 /// * `summary` - a FileSummary object (soon to be a collection of them) containing
 /// the files to print to std out.
-fn print_summary(summary: &FileSummary) {
-    println!("{}\t{}\t{}\t{}", summary.lines, summary.words, summary.chars, summary.file_name);
+fn print_summary(summary: &FileSummary, padding: usize) {
+    println!("{:>padding$} {:>padding$} {:>padding$} {:>padding$}", summary.lines, summary.words, summary.chars, summary.label);
 }
 
 fn handle_file_contents(contents: String) -> FileSummary {
@@ -92,7 +123,7 @@ fn handle_file_contents(contents: String) -> FileSummary {
         lines: 0, 
         words: 0, 
         chars: 0, 
-        file_name: "".to_owned()
+        label: "".to_owned()
     };
 
     fs.lines = contents.lines().count();
