@@ -101,11 +101,16 @@ struct FileSummary {
 /// 
 /// * `summary` - a FileSummary object (soon to be a collection of them) containing
 /// the files to print to std out.
+/// * `padding` - the number of spaces to pad between values on a line. Get this by
+/// looping through all of the FileSummary objects and getting the largest value, 
+/// meaning the longest number when converted to a String.
 fn print_summary(summary: &FileSummary, padding: usize) {
     println!("{:>padding$} {:>padding$} {:>padding$} {:>padding$}", summary.lines, summary.words, summary.chars, summary.label);
 }
 
 /// Utility function to count lines, words, and characters in the given file. Save to a FileSummary struct.
+/// # Arguments
+/// * `contents` - the contents of the file in question, as a String.
 fn handle_file_contents(contents: String) -> FileSummary {
     let mut fs = FileSummary { 
         lines: 0, 
