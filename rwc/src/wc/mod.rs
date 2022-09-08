@@ -133,6 +133,9 @@ fn handle_file_contents(contents: String) -> FileSummary {
         label: "".to_owned()
     };
 
+    // The lines() function checks for either \n or \r\n. Final line ending is optional.
+    // So a file ending in an empty line is the same as one with no final line ending.
+    // See rust docs for core::str::lines().
     fs.lines = contents.lines().count();
     fs.words = contents.split_ascii_whitespace().count();
     fs.chars = contents.len();
@@ -162,8 +165,8 @@ mod tests {
         assert_eq!(file_err.len(), 0); // no items should be here.
 
         let trees_sum = &file_sum[0];
-        assert_eq!(trees_sum.lines, 21); // is this correct?
+        assert_eq!(trees_sum.lines, 21);
         assert_eq!(trees_sum.words, 83);
-        assert_eq!(trees_sum.chars, 415); // is this correct?
+        assert_eq!(trees_sum.chars, 415);
     }
 }
