@@ -4,21 +4,9 @@ use std::cmp::max;
 
 /// Count words, lines, and bytes in the given files.
 pub fn wc(args: Vec<String>) -> Result<(), Error> {
-    let mut summaries: Vec<FileSummary> = Vec::new();
-    let mut file_errors: Vec<String> = Vec::new();
 
     let file_names = &args[1..];
-    for file_path in file_names.iter() {
-        let contents = fs::read_to_string(file_path);
-        match contents {
-            Ok(c) => {
-                let mut summary = handle_file_contents(c);
-                summary.label = file_path.to_owned();
-                summaries.push(summary);
-            },
-            Err(e) => file_errors.push(format!("{}: {}", e.to_string(), file_path)),
-        };
-    }
+    let (mut summaries, file_errors) = summarize_files(file_names);
 
     // get longest number so you can set the amount of padding
     // also get a running total of all lines, words, and chars
@@ -54,6 +42,32 @@ pub fn wc(args: Vec<String>) -> Result<(), Error> {
     }
 
     Ok(())
+}
+
+/// Take a list of files and summarize them.
+/// 
+/// Return a tuple containing a Vec of FileSummary structs, and a Vec of error Strings.
+/// 
+/// # Arguments
+/// 
+/// * `file_names` - a pointer to an array of Strings that are file names recieved from the user at the command line.
+fn summarize_files(file_names: &[String]) -> (Vec<FileSummary>, Vec<String>) {
+    let mut summaries: Vec<FileSummary> = Vec::new();
+    let mut file_errors: Vec<String> = Vec::new();
+
+    for file_path in file_names.iter() {
+        let contents = fs::read_to_string(file_path);
+        match contents {
+            Ok(c) => {
+                let mut summary = handle_file_contents(c);
+                summary.label = file_path.to_owned();
+                summaries.push(summary);
+            },
+            Err(e) => file_errors.push(format!("{}: {}", e.to_string(), file_path)),
+        };
+    }
+
+    (summaries, file_errors)
 }
 
 /// Struct that contains info about the files that wc is told to get info about.
@@ -131,11 +145,25 @@ mod tests {
     use super::*;
 
     #[test]
+    // Simple test to make sure handle_file_contents counts words and stuff.
     fn test_handle_file_contents_1() {
         let simple_str = "this is a short bit of text".to_owned();
         let fs = handle_file_contents(simple_str);
         assert_eq!(fs.lines, 1);
         assert_eq!(fs.words, 7);
         assert_eq!(fs.chars, 27);
+    }
+
+    #[test]
+    // Read the file trees.txt and get various counts for it.
+    fn read_trees() {
+        let (file_sum, file_err) = summarize_files(&["src/wc/test_files/trees.txt".to_owned()]);
+        assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
+        assert_eq!(file_err.len(), 0); // no items should be here.
+
+        let trees_sum = &file_sum[0];
+        assert_eq!(trees_sum.lines, 21); // is this correct?
+        assert_eq!(trees_sum.words, 83);
+        assert_eq!(trees_sum.chars, 415); // is this correct?
     }
 }
