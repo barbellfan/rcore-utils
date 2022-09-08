@@ -169,4 +169,96 @@ mod tests {
         assert_eq!(trees_sum.words, 83);
         assert_eq!(trees_sum.chars, 415);
     }
+
+    #[test]
+    fn read_fire() {
+        let (file_sum, file_err) = summarize_files(&["src/wc/test_files/fire_and_ice.txt".to_owned()]);
+        assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
+        assert_eq!(file_err.len(), 0); // no items should be here.
+
+        let fire_sum = &file_sum[0];
+        assert_eq!(fire_sum.lines, 13);
+        assert_eq!(fire_sum.words, 56);
+        assert_eq!(fire_sum.chars, 272);
+    }
+
+    #[test]
+    fn read_so_tired() {
+        let (file_sum, file_err) = summarize_files(&["src/wc/test_files/so_tired_blues.txt".to_owned()]);
+        assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
+        assert_eq!(file_err.len(), 0); // no items should be here.
+
+        let tired_sum = &file_sum[0];
+        assert_eq!(tired_sum.lines, 9);
+        assert_eq!(tired_sum.words, 26);
+        assert_eq!(tired_sum.chars, 131);
+    }
+
+    #[test]
+    fn read_so_tired_and_fire() {
+        let (file_sum, file_err) = summarize_files(&[
+            "src/wc/test_files/so_tired_blues.txt".to_owned(),
+            "src/wc/test_files/fire_and_ice.txt".to_owned()
+        ]);
+        assert_eq!(file_sum.len(), 2); // there should be two items in this vec.
+        assert_eq!(file_err.len(), 0); // no items should be here.
+
+        let tired_sum = &file_sum[0];
+        assert_eq!(tired_sum.lines, 9);
+        assert_eq!(tired_sum.words, 26);
+        assert_eq!(tired_sum.chars, 131);
+
+        let fire_sum = &file_sum[1];
+        assert_eq!(fire_sum.lines, 13);
+        assert_eq!(fire_sum.words, 56);
+        assert_eq!(fire_sum.chars, 272);
+    }
+
+    #[test]
+    fn read_dracula() {
+        let (file_sum, file_err) = summarize_files(&["src/wc/test_files/dracula.txt".to_owned()]);
+        assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
+        assert_eq!(file_err.len(), 0); // no items should be here.
+
+        let tired_sum = &file_sum[0];
+        assert_eq!(tired_sum.lines, 15857);
+        assert_eq!(tired_sum.words, 164382);
+        assert_eq!(tired_sum.chars, 881220);
+    }
+
+    #[test]
+    fn read_frank() {
+        let (file_sum, file_err) = summarize_files(&["src/wc/test_files/frankenstein.txt".to_owned()]);
+        assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
+        assert_eq!(file_err.len(), 0); // no items should be here.
+
+        let tired_sum = &file_sum[0];
+        assert_eq!(tired_sum.lines, 7741);
+        assert_eq!(tired_sum.words, 78122);
+        assert_eq!(tired_sum.chars, 448817);
+    }
+
+    #[test]
+    fn read_moby() {
+        let (file_sum, file_err) = summarize_files(&["src/wc/test_files/moby_dick.txt".to_owned()]);
+        assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
+        assert_eq!(file_err.len(), 0); // no items should be here.
+
+        let tired_sum = &file_sum[0];
+        assert_eq!(tired_sum.lines, 22314);
+        assert_eq!(tired_sum.words, 215864);
+        assert_eq!(tired_sum.chars, 1276231);
+    }
+
+    #[test]
+    fn read_err() {
+        let (file_sum, file_err) = summarize_files(&["src/wc/test_files/does_not_exist.txt".to_owned()]);
+        assert_eq!(file_sum.len(), 0); // there should be just one item in this vec.
+        assert_eq!(file_err.len(), 1); // no items should be here.
+
+        let err_msg = &file_err[0];
+        // I get this error in Linux (Mint). It might be different in Windows or Mac, or even other Linux distributions.
+        assert_eq!(err_msg, "No such file or directory (os error 2): src/wc/test_files/does_not_exist.txt");
+    }
+
 }
