@@ -39,3 +39,13 @@ fn get_current_exe_name() -> Option<String> {
         .to_owned()
         .into()
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn exe_name() {
+        // the exe name is weird when doing the test.
+        assert_eq!("wc-1bd0958c75aeaae5".to_owned(), get_current_exe_name().unwrap());
+    }}
