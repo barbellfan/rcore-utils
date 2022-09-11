@@ -326,4 +326,76 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn read_err_2() {
+        let file_sum = summarize_files(&[
+            "src/wc/test_files/does_not_exist.txt".to_owned(),
+            "src/wc/test_files/moby_dick.txt".to_owned()
+        ]);
+        assert_eq!(file_sum.len(), 2); // there should be just one item in this vec.
+
+        match &file_sum[0] {
+            WCResult::FileStats(_) => {
+                panic!("Should not have found the file");
+            },
+            WCResult::ErrMsg(e) => {
+                // I get this error in Linux (Mint). It might be different in Windows or Mac, or even other Linux distributions.
+                assert_eq!(e, "No such file or directory (os error 2): src/wc/test_files/does_not_exist.txt");
+            }
+        }
+
+        match &file_sum[1] {
+            WCResult::FileStats(fs) => {
+                check_file_summary_val(fs.lines, 22314, "line".to_owned());
+                check_file_summary_val(fs.words, 215864, "word".to_owned());
+                check_file_summary_val(fs.chars, 1276231, "byte".to_owned());
+            },
+            WCResult::ErrMsg(e) => {
+                panic!("Should not have caused an error: {}", e);
+            }
+        }
+    }
+
+    #[test]
+    fn read_err_3() {
+        let file_sum = summarize_files(&[
+            "src/wc/test_files/frankenstein.txt".to_owned(),
+            "src/wc/test_files/does_not_exist.txt".to_owned(),
+            "src/wc/test_files/moby_dick.txt".to_owned()
+        ]);
+        assert_eq!(file_sum.len(), 3); // there should be just one item in this vec.
+
+        match &file_sum[0] {
+            WCResult::FileStats(fs) => {
+                check_file_summary_val(fs.lines, 7741, "line".to_owned());
+                check_file_summary_val(fs.words, 78122, "word".to_owned());
+                check_file_summary_val(fs.chars, 448817, "byte".to_owned());
+            },
+            WCResult::ErrMsg(e) => {
+                panic!("Should not have caused an error: {}", e);
+            }
+        }
+        
+        match &file_sum[1] {
+            WCResult::FileStats(_) => {
+                panic!("Should not have found the file");
+            },
+            WCResult::ErrMsg(e) => {
+                // I get this error in Linux (Mint). It might be different in Windows or Mac, or even other Linux distributions.
+                assert_eq!(e, "No such file or directory (os error 2): src/wc/test_files/does_not_exist.txt");
+            }
+        }
+
+        match &file_sum[2] {
+            WCResult::FileStats(fs) => {
+                check_file_summary_val(fs.lines, 22314, "line".to_owned());
+                check_file_summary_val(fs.words, 215864, "word".to_owned());
+                check_file_summary_val(fs.chars, 1276231, "byte".to_owned());
+            },
+            WCResult::ErrMsg(e) => {
+                panic!("Should not have caused an error: {}", e);
+            }
+        }
+    }
 }
