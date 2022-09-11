@@ -8,6 +8,17 @@ pub fn wc(args: Vec<String>) -> Result<(), Error> {
     let file_names = &args[1..];
     let mut summaries = summarize_files(file_names);
 
+    let max_len = get_totals(&mut summaries);
+
+    for file_summary_result in summaries.iter() {
+        print_summary(file_summary_result, max_len);
+    }
+
+    Ok(())
+}
+
+/// Get totals of all files, if there is more than one.
+fn get_totals(summaries: &mut Vec<WCResult>) -> usize {
     // get longest number so you can set the amount of padding
     // also get a running total of all lines, words, and chars
     let mut max_len = 0;
@@ -34,12 +45,9 @@ pub fn wc(args: Vec<String>) -> Result<(), Error> {
 
     summaries.push(WCResult::FileStats(total_summary));
 
-    for file_summary_result in summaries.iter() {
-        print_summary(file_summary_result, max_len);
-    }
-
-    Ok(())
+    max_len
 }
+
 
 /// Take a list of files and summarize them.
 /// 
@@ -326,6 +334,32 @@ mod tests {
                     "windows" => assert_eq!(e, "The system cannot find the file specified. (os error 2): src/wc/test_files/does_not_exist.txt"),
                     _ => panic!("Not tested on this operating system: {}", std::env::consts::OS),
                 };
+            }
+        }
+    }
+
+    #[test]
+    fn test_get_totals() {
+        let f1 = FileSummary {lines: 1, words: 1, chars: 1, label: "file_1".to_owned()};
+        let f2 = FileSummary {lines: 2, words: 2, chars: 2, label: "file_2".to_owned()};
+
+        let mut fv = vec!();
+        fv.push(WCResult::FileStats(f1));
+        fv.push(WCResult::FileStats(f2));
+
+        get_totals(&mut fv);
+
+        assert_eq!(fv.len(), 3, "get_totals should have added one item to the vec. Expected length of 3, but found {}", fv.len());
+
+        match &fv[2] {
+            WCResult::FileStats(fs) => {
+                check_file_summary_val(fs.lines, 3, "line".to_owned());
+                check_file_summary_val(fs.words, 3, "word".to_owned());
+                check_file_summary_val(fs.chars, 3, "byte".to_owned());
+                assert_eq!(fs.label, "total".to_owned());
+            },
+            WCResult::ErrMsg(e) => {
+                panic!("Should not have caused this error: {}", e);
             }
         }
     }
