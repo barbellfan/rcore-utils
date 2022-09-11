@@ -10,9 +10,9 @@ pub fn wc(args: Vec<String>) -> Result<(), Error> {
 
     let max_len = get_totals(&mut summaries);
 
-    for file_summary_result in summaries.iter() {
+    summaries.iter().for_each(|file_summary_result| {
         println!("{}", format_summary(file_summary_result, max_len));
-    }
+    });
 
     Ok(())
 }
@@ -46,7 +46,12 @@ fn get_totals(summaries: &mut Vec<WCResult>) -> usize {
     }
 
     if summaries.len() > 1 {
-        summaries.push(WCResult::FileStats(total_summary));
+        // max len might be longer here if other totals make longer numbers
+        max_len = max(max_len, total_summary.lines.to_string().len());
+        max_len = max(max_len, total_summary.words.to_string().len());
+        max_len = max(max_len, total_summary.chars.to_string().len());
+
+    summaries.push(WCResult::FileStats(total_summary));
     }
 
     max_len
@@ -138,7 +143,7 @@ struct FileSummary {
 fn format_summary(summary: &WCResult, padding: usize) -> String {
     match summary {
         WCResult::FileStats(f) => {
-            format!("{:>padding$} {:>padding$} {:>padding$} {:>padding$}", f.lines, f.words, f.chars, f.label)
+            format!("{:>padding$} {:>padding$} {:>padding$} {}", f.lines, f.words, f.chars, f.label)
         },
         WCResult::ErrMsg(e) => {
             format!("{}", e)
@@ -475,5 +480,14 @@ mod tests {
         let ws = WCResult::FileStats(FileSummary{lines: 1, words: 1, chars: 1, label: "thing".to_owned()});
         let s = format_summary(&ws, 2);
         assert_eq!(s, " 1  1  1 thing");
+    }
+
+    #[test]
+    fn test_format_summary_padding_3() {
+        let mut file_sum = summarize_files(&[
+            "src/wc/test_files/dracula.txt".to_owned(),
+            "src/wc/test_files/frankenstein.txt".to_owned()]);
+        let max_len = get_totals(&mut file_sum);
+        assert_eq!(max_len, 7, "Max length should have been 7, but was {}", max_len);
     }
 }
