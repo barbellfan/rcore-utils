@@ -321,8 +321,11 @@ mod tests {
                 panic!("Should not have found the file");
             },
             WCResult::ErrMsg(e) => {
-                // I get this error in Linux (Mint). It might be different in Windows or Mac, or even other Linux distributions.
-                assert_eq!(e, "No such file or directory (os error 2): src/wc/test_files/does_not_exist.txt");
+                match std::env::consts::OS {
+                    "linux" => assert_eq!(e, "No such file or directory (os error 2): src/wc/test_files/does_not_exist.txt"),
+                    "windows" => assert_eq!(e, "The system cannot find the file specified. (os error 2): src/wc/test_files/does_not_exist.txt"),
+                    _ => panic!("Not tested on this operating system: {}", std::env::consts::OS),
+                };
             }
         }
     }
