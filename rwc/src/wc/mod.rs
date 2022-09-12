@@ -2,6 +2,25 @@ use std::io::Error;
 use std::fs;
 use std::cmp::max;
 
+/// Enum that handles the two cases that wc can run up against: a file, or an error message.
+enum WCResult {
+    FileStats(FileSummary),
+    ErrMsg(String),
+}
+
+/// Struct that contains info about the files that wc is told to get info about.
+#[derive(Debug)]
+struct FileSummary {
+    /// Number of lines found in the file
+    lines: usize,
+    /// Number of words found in the file.
+    words: usize, 
+    /// Number of bytes found in the file.
+    bytes: usize, 
+    /// Label for thing being counted. Is either the file name or `total`.
+    label: String, 
+}
+
 /// Count words, lines, and bytes in the given files.
 pub fn wc(args: Vec<String>) -> Result<(), Error> {
 
@@ -92,25 +111,6 @@ fn summarize_files(file_names: &[String]) -> Vec<WCResult> {
     }
 
     summaries
-}
-
-/// Enum that handles the two cases that wc can run up against: a file, or an error message.
-enum WCResult {
-    FileStats(FileSummary),
-    ErrMsg(String),
-}
-
-/// Struct that contains info about the files that wc is told to get info about.
-#[derive(Debug)]
-struct FileSummary {
-    /// Number of lines found in the file
-    lines: usize,
-    /// Number of words found in the file.
-    words: usize, 
-    /// Number of bytes found in the file.
-    bytes: usize, 
-    /// Label for thing being counted. Is either the file name or `total`.
-    label: String, 
 }
 
 /// Format a `FileSummary` struct to look like the original wc command's output.
