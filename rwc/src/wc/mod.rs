@@ -18,6 +18,15 @@ pub fn wc(args: Vec<String>) -> Result<(), Error> {
 }
 
 /// Get totals of all files, if there is more than one.
+/// 
+/// Returns a `usize` containing the length of the longest number
+/// in all of the structs. Longest meaning the largest number of digits.
+/// This is used as padding later.
+/// 
+/// # Arguments
+///  * `summaries` - A Vec of `WCResult` enums. If there is more than 
+/// one, a `FileSummary` struct with the label "total" is added
+/// at the end. This will contain totals of all the other structs.
 fn get_totals(summaries: &mut Vec<WCResult>) -> usize {
     // get longest number so you can set the amount of padding
     // also get a running total of all lines, words, and chars
@@ -25,7 +34,7 @@ fn get_totals(summaries: &mut Vec<WCResult>) -> usize {
     let mut total_summary = FileSummary {
         lines: 0,
         words: 0,
-        chars: 0,
+        bytes: 0,
         label: "total".to_owned(),
     };
 
@@ -35,13 +44,13 @@ fn get_totals(summaries: &mut Vec<WCResult>) -> usize {
             if summaries.len() > 1 {
                 total_summary.lines += filsm.lines;
                 total_summary.words += filsm.words;
-                total_summary.chars += filsm.chars;
+                total_summary.bytes += filsm.bytes;
             }
 
             // get longest number
             max_len = max(max_len, filsm.lines.to_string().len());
             max_len = max(max_len, filsm.words.to_string().len());
-            max_len = max(max_len, filsm.chars.to_string().len());
+            max_len = max(max_len, filsm.bytes.to_string().len());
         }
     }
 
@@ -49,7 +58,7 @@ fn get_totals(summaries: &mut Vec<WCResult>) -> usize {
         // max len might be longer here if other totals make longer numbers
         max_len = max(max_len, total_summary.lines.to_string().len());
         max_len = max(max_len, total_summary.words.to_string().len());
-        max_len = max(max_len, total_summary.chars.to_string().len());
+        max_len = max(max_len, total_summary.bytes.to_string().len());
 
     summaries.push(WCResult::FileStats(total_summary));
     }
@@ -60,12 +69,13 @@ fn get_totals(summaries: &mut Vec<WCResult>) -> usize {
 
 /// Take a list of files and summarize them.
 /// 
-/// Return a Vec of WCResult enums, which can either be a FileSummary
-/// struct, or a String which should be an error message.
+/// Return a Vec of `WCResult` enums, which can either be a `FileSummary`
+/// struct, or a `String` which should be an error message.
 /// 
 /// # Arguments
 /// 
-/// * `file_names` - a pointer to an array of Strings that are file names recieved from the user at the command line.
+/// * `file_names` - a pointer to an array of Strings that are file names 
+/// recieved from the user at the command line.
 fn summarize_files(file_names: &[String]) -> Vec<WCResult> {
     let mut summaries: Vec<WCResult> = Vec::new();
 
@@ -97,13 +107,13 @@ struct FileSummary {
     lines: usize,
     /// Number of words found in the file.
     words: usize, 
-    /// Number of characters found in the file.
-    chars: usize, 
-    /// Label for thing being counted. Is either the file name or the total.
+    /// Number of bytes found in the file.
+    bytes: usize, 
+    /// Label for thing being counted. Is either the file name or `total`.
     label: String, 
 }
 
-/// Print a file summary to standard out like the original wc command.
+/// Format a `FileSummary` struct to look like the original wc command's output.
 /// 
 /// This means the following:
 /// * Calculate the value with the longest number of chars, and
@@ -112,7 +122,7 @@ struct FileSummary {
 /// * Right justify the numbers.
 /// 
 /// If there is more than one file, check the length of each file's
-/// values. The format! macro has justify and padding options, and include
+/// values. The `format!` macro has justify and padding options, and include
 /// a total line at the end.
 /// 
 /// This makes a nice output like this:
@@ -136,14 +146,15 @@ struct FileSummary {
 /// 
 /// # Arguments
 /// 
-/// * `summary` - a WCResult enum that can contain a FileSummary struct, or an error message as a String.
+/// * `summary` - a `WCResult` enum that can contain a `FileSummary` struct, or an 
+/// error message as a String.
 /// * `padding` - the number of spaces to pad between values on a line. Get this by
-/// looping through all of the FileSummary objects and getting the largest value, 
-/// meaning the longest number when converted to a String.
+/// looping through all of the `FileSummary` structs and getting the largest value, 
+/// meaning the longest number when converted to a `String`.
 fn format_summary(summary: &WCResult, padding: usize) -> String {
     match summary {
         WCResult::FileStats(f) => {
-            format!("{:>padding$} {:>padding$} {:>padding$} {}", f.lines, f.words, f.chars, f.label)
+            format!("{:>padding$} {:>padding$} {:>padding$} {}", f.lines, f.words, f.bytes, f.label)
         },
         WCResult::ErrMsg(e) => {
             format!("{}", e)
@@ -151,14 +162,15 @@ fn format_summary(summary: &WCResult, padding: usize) -> String {
     }
 }
 
-/// Utility function to count lines, words, and characters in the given file. Return a FileSummary struct.
+/// Utility function to count lines, words, and bytes in the given file. Return a 
+/// `FileSummary` struct.
 /// # Arguments
-/// * `contents` - the contents of the file in question, as a String.
+/// * `contents` - the contents of the file in question, as a `String`.
 fn handle_file_contents(contents: String) -> FileSummary {
     let mut fs = FileSummary { 
         lines: 0, 
         words: 0, 
-        chars: 0, 
+        bytes: 0, 
         label: "".to_owned()
     };
 
@@ -167,7 +179,7 @@ fn handle_file_contents(contents: String) -> FileSummary {
     // See rust docs for core::str::lines().
     fs.lines = contents.lines().count();
     fs.words = contents.split_ascii_whitespace().count();
-    fs.chars = contents.len();
+    fs.bytes = contents.len();
 
     fs
 }
@@ -191,7 +203,7 @@ mod tests {
         let fs = handle_file_contents(simple_str);
         check_file_summary_val(fs.lines, 1, "line".to_owned());
         check_file_summary_val(fs.words, 7, "word".to_owned());
-        check_file_summary_val(fs.chars, 27, "byte".to_owned());
+        check_file_summary_val(fs.bytes, 27, "byte".to_owned());
     }
 
     #[test]
@@ -204,7 +216,7 @@ mod tests {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 21, "line".to_owned());
                 check_file_summary_val(fs.words, 83, "word".to_owned());
-                check_file_summary_val(fs.chars, 415, "byte".to_owned());
+                check_file_summary_val(fs.bytes, 415, "byte".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -220,7 +232,7 @@ mod tests {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 13, "line".to_owned());
                 check_file_summary_val(fs.words, 56, "word".to_owned());
-                check_file_summary_val(fs.chars, 272, "byte".to_owned());
+                check_file_summary_val(fs.bytes, 272, "byte".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -237,7 +249,7 @@ mod tests {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 9, "line".to_owned());
                 check_file_summary_val(fs.words, 26, "word".to_owned());
-                check_file_summary_val(fs.chars, 131, "byte".to_owned());
+                check_file_summary_val(fs.bytes, 131, "byte".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -257,7 +269,7 @@ mod tests {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 9, "line".to_owned());
                 check_file_summary_val(fs.words, 26, "word".to_owned());
-                check_file_summary_val(fs.chars, 131, "byte".to_owned());
+                check_file_summary_val(fs.bytes, 131, "byte".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -268,7 +280,7 @@ mod tests {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 13, "line".to_owned());
                 check_file_summary_val(fs.words, 56, "word".to_owned());
-                check_file_summary_val(fs.chars, 272, "byte".to_owned());
+                check_file_summary_val(fs.bytes, 272, "byte".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -285,7 +297,7 @@ mod tests {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 15857, "line".to_owned());
                 check_file_summary_val(fs.words, 164382, "word".to_owned());
-                check_file_summary_val(fs.chars, 881220, "byte".to_owned());
+                check_file_summary_val(fs.bytes, 881220, "byte".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -302,7 +314,7 @@ mod tests {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 7741, "line".to_owned());
                 check_file_summary_val(fs.words, 78122, "word".to_owned());
-                check_file_summary_val(fs.chars, 448817, "byte".to_owned());
+                check_file_summary_val(fs.bytes, 448817, "byte".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -319,7 +331,7 @@ mod tests {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 22314, "line".to_owned());
                 check_file_summary_val(fs.words, 215864, "word".to_owned());
-                check_file_summary_val(fs.chars, 1276231, "byte".to_owned());
+                check_file_summary_val(fs.bytes, 1276231, "byte".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -348,8 +360,8 @@ mod tests {
 
     #[test]
     fn test_get_totals() {
-        let f1 = FileSummary {lines: 1, words: 1, chars: 1, label: "file_1".to_owned()};
-        let f2 = FileSummary {lines: 2, words: 2, chars: 2, label: "file_2".to_owned()};
+        let f1 = FileSummary {lines: 1, words: 1, bytes: 1, label: "file_1".to_owned()};
+        let f2 = FileSummary {lines: 2, words: 2, bytes: 2, label: "file_2".to_owned()};
 
         let mut fv = vec!();
         fv.push(WCResult::FileStats(f1));
@@ -363,7 +375,7 @@ mod tests {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 3, "line".to_owned());
                 check_file_summary_val(fs.words, 3, "word".to_owned());
-                check_file_summary_val(fs.chars, 3, "byte".to_owned());
+                check_file_summary_val(fs.bytes, 3, "byte".to_owned());
                 assert_eq!(fs.label, "total".to_owned());
             },
             WCResult::ErrMsg(e) => {
@@ -374,7 +386,7 @@ mod tests {
 
     #[test]
     fn test_no_totals_with_one_file() {
-        let f1 = FileSummary {lines: 1, words: 1, chars: 1, label: "file_1".to_owned()};
+        let f1 = FileSummary {lines: 1, words: 1, bytes: 1, label: "file_1".to_owned()};
 
         let mut fv = vec!();
         fv.push(WCResult::FileStats(f1));
@@ -387,7 +399,7 @@ mod tests {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 1, "line".to_owned());
                 check_file_summary_val(fs.words, 1, "word".to_owned());
-                check_file_summary_val(fs.chars, 1, "byte".to_owned());
+                check_file_summary_val(fs.bytes, 1, "byte".to_owned());
                 assert_eq!(fs.label, "file_1".to_owned());
             },
             WCResult::ErrMsg(e) => {
@@ -418,7 +430,7 @@ mod tests {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 22314, "line".to_owned());
                 check_file_summary_val(fs.words, 215864, "word".to_owned());
-                check_file_summary_val(fs.chars, 1276231, "byte".to_owned());
+                check_file_summary_val(fs.bytes, 1276231, "byte".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -439,7 +451,7 @@ mod tests {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 7741, "line".to_owned());
                 check_file_summary_val(fs.words, 78122, "word".to_owned());
-                check_file_summary_val(fs.chars, 448817, "byte".to_owned());
+                check_file_summary_val(fs.bytes, 448817, "byte".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -460,7 +472,7 @@ mod tests {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 22314, "line".to_owned());
                 check_file_summary_val(fs.words, 215864, "word".to_owned());
-                check_file_summary_val(fs.chars, 1276231, "byte".to_owned());
+                check_file_summary_val(fs.bytes, 1276231, "byte".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -470,14 +482,14 @@ mod tests {
 
     #[test]
     fn test_format_summary_padding_5() {
-        let ws = WCResult::FileStats(FileSummary{lines: 1, words: 1, chars: 1, label: "thing".to_owned()});
+        let ws = WCResult::FileStats(FileSummary{lines: 1, words: 1, bytes: 1, label: "thing".to_owned()});
         let s = format_summary(&ws, 5);
         assert_eq!(s, "    1     1     1 thing");
     }
 
     #[test]
     fn test_format_summary_padding_2() {
-        let ws = WCResult::FileStats(FileSummary{lines: 1, words: 1, chars: 1, label: "thing".to_owned()});
+        let ws = WCResult::FileStats(FileSummary{lines: 1, words: 1, bytes: 1, label: "thing".to_owned()});
         let s = format_summary(&ws, 2);
         assert_eq!(s, " 1  1  1 thing");
     }
