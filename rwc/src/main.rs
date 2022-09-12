@@ -16,9 +16,6 @@ fn main() -> Result<(), Error> {
     }
 
     wc::wc(args)
-/*
-
-    */
 }
 
 /// Display usage directions. Should be the same as or very
@@ -31,6 +28,10 @@ fn usage() {
 /// Get the name of the current executable. By default,
 /// it will be wc (wc.exe on Windows). Used by the usage()
 /// function for display.
+/// 
+/// During tests, the expected exe name has some sort of hash
+/// appended to it. Must be something weird with Rust tests.
+/// Not sure if that hash will ever change.
 fn get_current_exe_name() -> Option<String> {
     current_exe()
         .ok()?
