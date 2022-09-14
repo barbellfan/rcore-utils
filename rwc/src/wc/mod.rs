@@ -30,7 +30,10 @@ pub fn wc(args: Vec<String>) -> Result<(), Error> {
     let max_len = get_totals(&mut summaries);
 
     summaries.iter().for_each(|file_summary_result| {
-        println!("{}", format_summary(file_summary_result, max_len));
+        match file_summary_result {
+            WCResult::FileStats(s) => println!("{}", format_summary(s, max_len)),
+            WCResult::ErrMsg(e) => eprintln!("{}", e),
+        } ;
     });
 
     Ok(())
@@ -151,15 +154,8 @@ fn summarize_files(file_names: &[String]) -> Vec<WCResult> {
 /// * `padding` - the number of spaces to pad between values on a line. Get this by
 /// looping through all of the `FileSummary` structs and getting the largest value, 
 /// meaning the longest number when converted to a `String`.
-fn format_summary(summary: &WCResult, padding: usize) -> String {
-    match summary {
-        WCResult::FileStats(f) => {
-            format!("{:>padding$} {:>padding$} {:>padding$} {}", f.lines, f.words, f.bytes, f.label)
-        },
-        WCResult::ErrMsg(e) => {
-            format!("{}", e)
-        }
-    }
+fn format_summary(f: &FileSummary, padding: usize) -> String {
+    format!("{:>padding$} {:>padding$} {:>padding$} {}", f.lines, f.words, f.bytes, f.label)
 }
 
 /// Utility function to count lines, words, and bytes in the given file. Return a 
@@ -482,14 +478,14 @@ mod tests {
 
     #[test]
     fn test_format_summary_padding_5() {
-        let ws = WCResult::FileStats(FileSummary{lines: 1, words: 1, bytes: 1, label: "thing".to_owned()});
+        let ws = FileSummary{lines: 1, words: 1, bytes: 1, label: "thing".to_owned()};
         let s = format_summary(&ws, 5);
         assert_eq!(s, "    1     1     1 thing");
     }
 
     #[test]
     fn test_format_summary_padding_2() {
-        let ws = WCResult::FileStats(FileSummary{lines: 1, words: 1, bytes: 1, label: "thing".to_owned()});
+        let ws = FileSummary{lines: 1, words: 1, bytes: 1, label: "thing".to_owned()};
         let s = format_summary(&ws, 2);
         assert_eq!(s, " 1  1  1 thing");
     }

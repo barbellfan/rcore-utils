@@ -70,4 +70,64 @@ mod test {
         
         Ok(())
     }
+
+    #[test]
+    fn read_dracula() -> Result<(), Box<dyn std::error::Error>> {
+        let expected = " 15857 164382 881220 tests/test_files/dracula.txt\n";
+
+        let mut cmd = get_cmd();
+        cmd.arg("tests/test_files/dracula.txt");
+
+        cmd.assert()
+            .success()
+            .stdout(predicate::eq(expected))
+            .code(predicate::eq(0));
+
+        Ok(())
+    }
+
+    #[test]
+    fn read_frank() -> Result<(), Box<dyn std::error::Error>> {
+        let expected = "  7741  78122 448817 tests/test_files/frankenstein.txt\n";
+
+        let mut cmd = get_cmd();
+        cmd.arg("tests/test_files/frankenstein.txt");
+
+        cmd.assert()
+            .success()
+            .stdout(predicate::eq(expected))
+            .code(predicate::eq(0));
+
+        Ok(())
+    }
+
+    #[test]
+    fn read_moby() -> Result<(), Box<dyn std::error::Error>> {
+        let expected = "  22314  215864 1276231 tests/test_files/moby_dick.txt\n";
+
+        let mut cmd = get_cmd();
+        cmd.arg("tests/test_files/moby_dick.txt");
+
+        cmd.assert()
+            .success()
+            .stdout(predicate::eq(expected))
+            .code(predicate::eq(0));
+
+        Ok(())
+    }
+
+    #[test]
+    fn read_err() -> Result<(), Box<dyn std::error::Error>> {
+        let expected_linux = "No such file or directory (os error 2): tests/test_files/does_not_exist.txt\n";
+        let expected_windows = "The system cannot find the file specified. (os error 2): src/wc/test_files/does_not_exist.txt\n";
+
+        let mut cmd = get_cmd();
+        cmd.arg("tests/test_files/does_not_exist.txt");
+
+        cmd.assert()
+            .success()
+            .stderr(predicate::eq(expected_linux));
+        
+        Ok(())
+    }
 }
