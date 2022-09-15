@@ -120,14 +120,40 @@ mod test {
     fn read_err() -> Result<(), Box<dyn std::error::Error>> {
         let expected_linux = "No such file or directory (os error 2): tests/test_files/does_not_exist.txt\n";
         let expected_windows = "The system cannot find the file specified. (os error 2): src/wc/test_files/does_not_exist.txt\n";
+        let expected = match std::env::consts::OS {
+            "linux" => expected_linux,
+            "windows" => expected_windows,
+            _ => panic!("Not tested on this operating system: {}", std::env::consts::OS),
+        };
 
         let mut cmd = get_cmd();
         cmd.arg("tests/test_files/does_not_exist.txt");
 
         cmd.assert()
             .success()
-            .stderr(predicate::eq(expected_linux));
+            .stderr(predicate::eq(expected));
         
+        Ok(())
+    }
+
+    #[test]
+    fn read_3_big_files() -> Result<(), Box<dyn std::error::Error>> {
+        let expected = concat!(
+          "  22314  215864 1276231 tests/test_files/moby_dick.txt\n",
+          "   7741   78122  448817 tests/test_files/frankenstein.txt\n",
+          "  15857  164382  881220 tests/test_files/dracula.txt\n",
+          "  45912  458368 2606268 total\n"
+        );
+
+        let mut cmd = get_cmd();
+        cmd.arg("tests/test_files/moby_dick.txt")
+            .arg("tests/test_files/frankenstein.txt")
+            .arg("tests/test_files/dracula.txt")
+            .assert()
+            .success()
+            .stdout(predicate::eq(expected))
+            .code(predicate::eq(0));
+
         Ok(())
     }
 }
