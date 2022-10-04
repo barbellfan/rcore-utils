@@ -417,8 +417,15 @@ mod tests {
                 panic!("Should not have found the file");
             },
             WCResult::ErrMsg(e) => {
-                // I get this error in Linux (Mint). It might be different in Windows or Mac, or even other Linux distributions.
-                assert_eq!(e, "No such file or directory (os error 2): src/wc/test_files/does_not_exist.txt");
+                let expected_linux = "No such file or directory (os error 2): src/wc/test_files/does_not_exist.txt";
+                let expected_windows = "The system cannot find the file specified. (os error 2): src/wc/test_files/does_not_exist.txt";
+                let expected = match std::env::consts::OS {
+                    "linux" => expected_linux,
+                    "windows" => expected_windows,
+                    _ => panic!("Not tested on this operating system: {}", std::env::consts::OS),
+                };
+
+                assert_eq!(e, expected);
             }
         }
 
@@ -459,8 +466,14 @@ mod tests {
                 panic!("Should not have found the file");
             },
             WCResult::ErrMsg(e) => {
-                // I get this error in Linux (Mint). It might be different in Windows or Mac, or even other Linux distributions.
-                assert_eq!(e, "No such file or directory (os error 2): src/wc/test_files/does_not_exist.txt");
+                let expected_linux = "No such file or directory (os error 2): src/wc/test_files/does_not_exist.txt";
+                let expected_windows = "The system cannot find the file specified. (os error 2): src/wc/test_files/does_not_exist.txt";
+                let expected = match std::env::consts::OS {
+                    "linux" => expected_linux,
+                    "windows" => expected_windows,
+                    _ => panic!("Not tested on this operating system: {}", std::env::consts::OS),
+                };
+                assert_eq!(e, expected);
             }
         }
 

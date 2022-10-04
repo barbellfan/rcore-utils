@@ -119,7 +119,7 @@ mod test {
     #[test]
     fn read_err() -> Result<(), Box<dyn std::error::Error>> {
         let expected_linux = "No such file or directory (os error 2): tests/test_files/does_not_exist.txt\n";
-        let expected_windows = "The system cannot find the file specified. (os error 2): src/wc/test_files/does_not_exist.txt\n";
+        let expected_windows = "The system cannot find the file specified. (os error 2): tests/test_files/does_not_exist.txt\n";
         let expected = match std::env::consts::OS {
             "linux" => expected_linux,
             "windows" => expected_windows,
