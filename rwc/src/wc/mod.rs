@@ -33,7 +33,7 @@ pub fn wc(args: Vec<String>) -> Result<(), Error> {
         match file_summary_result {
             WCResult::FileStats(s) => println!("{}", format_summary(s, max_len)),
             WCResult::ErrMsg(e) => eprintln!("{}", e),
-        } ;
+        };
     });
 
     Ok(())
