@@ -2,7 +2,7 @@
 //! 
 //! Counts words, bytes, and lines from a file or from the pipeline.
 
-use std::env::{current_exe, args};
+use std::env::{current_exe};
 use std::io::Error;
 
 use clap::{Parser};
@@ -10,7 +10,7 @@ use clap::{Parser};
 mod wc; 
 
 /// thing
-#[derive(Parser)]
+#[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
     #[arg(short = 'l', long)]
@@ -33,21 +33,19 @@ struct Cli {
     /// print the word counts
     words: bool,
 
-    
+    files: Option<Vec<String>>,
 }
 
 /// Entry point for the program.
 fn main() -> Result<(), Error> {
     let clap_args = Cli::parse();
-    println!("lines: {}", clap_args.lines);
 
-    let args : Vec<String> = args().collect();
-    if args.len() == 1 { // should always be length 1 if no args given
+    if let Some(_) = clap_args.files {
+        wc::wc(clap_args)
+    } else {
         usage();
         return Ok(())
     }
-
-    wc::wc(args)
 }
 
 /// Display usage directions. Should be the same as or very

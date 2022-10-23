@@ -2,6 +2,8 @@ use std::io::Error;
 use std::fs;
 use std::cmp::max;
 
+use crate::Cli;
+
 /// Enum that handles the two cases that wc can run up against: a file, or an error message.
 enum WCResult {
     FileStats(FileSummary),
@@ -22,21 +24,24 @@ struct FileSummary {
 }
 
 /// Count words, lines, and bytes in the given files.
-pub fn wc(args: Vec<String>) -> Result<(), Error> {
+pub(crate) fn wc(args: Cli) -> Result<(), Error> {
 
-    let file_names = &args[1..];
-    let mut summaries = summarize_files(file_names);
+    if let Some(file_names) = args.files {
+        let mut summaries = summarize_files(file_names);
 
-    let max_len = get_totals(&mut summaries);
+        let max_len = get_totals(&mut summaries);
 
-    summaries.iter().for_each(|file_summary_result| {
-        match file_summary_result {
-            WCResult::FileStats(s) => println!("{}", format_summary(s, max_len)),
-            WCResult::ErrMsg(e) => eprintln!("{}", e),
-        };
-    });
+        summaries.iter().for_each(|file_summary_result| {
+            match file_summary_result {
+                WCResult::FileStats(s) => println!("{}", format_summary(s, max_len)),
+                WCResult::ErrMsg(e) => eprintln!("{}", e),
+            };
+        });
 
-    Ok(())
+        Ok(())
+    } else {
+        Ok(())
+    }
 }
 
 /// Get totals of all files, if there is more than one.
@@ -98,7 +103,7 @@ fn get_totals(summaries: &mut Vec<WCResult>) -> usize {
 /// 
 /// * `file_names` - a pointer to an array of Strings that are file names 
 /// recieved from the user at the command line.
-fn summarize_files(file_names: &[String]) -> Vec<WCResult> {
+fn summarize_files(file_names: Vec<String>) -> Vec<WCResult> {
     let mut summaries: Vec<WCResult> = Vec::new();
 
     for file_path in file_names.iter() {
@@ -205,7 +210,7 @@ mod tests {
     #[test]
     // Read the file trees.txt and get various counts for it.
     fn read_trees() {
-        let file_sum = summarize_files(&["src/wc/test_files/trees.txt".to_owned()]);
+        let file_sum = summarize_files(vec!["src/wc/test_files/trees.txt".to_owned()]);
         assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
 
         match &file_sum[0] {
@@ -221,7 +226,7 @@ mod tests {
     }
     #[test]
     fn read_fire() {
-        let file_sum = summarize_files(&["src/wc/test_files/fire_and_ice.txt".to_owned()]);
+        let file_sum = summarize_files(vec!["src/wc/test_files/fire_and_ice.txt".to_owned()]);
         assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
 
         match &file_sum[0] {
@@ -238,7 +243,7 @@ mod tests {
 
     #[test]
     fn read_so_tired() {
-        let file_sum = summarize_files(&["src/wc/test_files/so_tired_blues.txt".to_owned()]);
+        let file_sum = summarize_files(vec!["src/wc/test_files/so_tired_blues.txt".to_owned()]);
         assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
 
         match &file_sum[0] {
@@ -255,7 +260,7 @@ mod tests {
 
     #[test]
     fn read_so_tired_and_fire() {
-        let file_sum = summarize_files(&[
+        let file_sum = summarize_files(vec![
             "src/wc/test_files/so_tired_blues.txt".to_owned(),
             "src/wc/test_files/fire_and_ice.txt".to_owned()
         ]);
@@ -286,7 +291,7 @@ mod tests {
 
     #[test]
     fn read_dracula() {
-        let file_sum = summarize_files(&["src/wc/test_files/dracula.txt".to_owned()]);
+        let file_sum = summarize_files(vec!["src/wc/test_files/dracula.txt".to_owned()]);
         assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
 
         match &file_sum[0] {
@@ -303,7 +308,7 @@ mod tests {
 
     #[test]
     fn read_frank() {
-        let file_sum = summarize_files(&["src/wc/test_files/frankenstein.txt".to_owned()]);
+        let file_sum = summarize_files(vec!["src/wc/test_files/frankenstein.txt".to_owned()]);
         assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
 
         match &file_sum[0] {
@@ -320,7 +325,7 @@ mod tests {
 
     #[test]
     fn read_moby() {
-        let file_sum = summarize_files(&["src/wc/test_files/moby_dick.txt".to_owned()]);
+        let file_sum = summarize_files(vec!["src/wc/test_files/moby_dick.txt".to_owned()]);
         assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
 
         match &file_sum[0] {
@@ -337,7 +342,7 @@ mod tests {
 
     #[test]
     fn read_err() {
-        let file_sum = summarize_files(&["src/wc/test_files/does_not_exist.txt".to_owned()]);
+        let file_sum = summarize_files(vec!["src/wc/test_files/does_not_exist.txt".to_owned()]);
         assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
 
         match &file_sum[0] {
@@ -406,7 +411,7 @@ mod tests {
 
     #[test]
     fn read_err_2() {
-        let file_sum = summarize_files(&[
+        let file_sum = summarize_files(vec![
             "src/wc/test_files/does_not_exist.txt".to_owned(),
             "src/wc/test_files/moby_dick.txt".to_owned()
         ]);
@@ -443,7 +448,7 @@ mod tests {
 
     #[test]
     fn read_err_3() {
-        let file_sum = summarize_files(&[
+        let file_sum = summarize_files(vec![
             "src/wc/test_files/frankenstein.txt".to_owned(),
             "src/wc/test_files/does_not_exist.txt".to_owned(),
             "src/wc/test_files/moby_dick.txt".to_owned()
@@ -505,7 +510,7 @@ mod tests {
 
     #[test]
     fn test_format_summary_padding_3() {
-        let mut file_sum = summarize_files(&[
+        let mut file_sum = summarize_files(vec![
             "src/wc/test_files/dracula.txt".to_owned(),
             "src/wc/test_files/frankenstein.txt".to_owned()]);
         let max_len = get_totals(&mut file_sum);
