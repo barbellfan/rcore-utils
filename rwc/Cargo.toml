@@ -3,7 +3,7 @@ name = "wc"
 version = "0.1.0"
 edition = "2021"
 authors = ["gh.84kjuqg365@gmail.com"]
-about = "Word count in Rust"
+description = "Word count in Rust"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

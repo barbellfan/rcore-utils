@@ -16,7 +16,9 @@ struct FileSummary {
     /// Number of lines found in the file
     lines: usize,
     /// Number of words found in the file.
-    words: usize, 
+    words: usize,
+    /// Number of characters found in the file.
+    chars: usize,
     /// Number of bytes found in the file.
     bytes: usize, 
     /// Label for thing being counted. Is either the file name or `total`.
@@ -26,8 +28,8 @@ struct FileSummary {
 /// Count words, lines, and bytes in the given files.
 pub(crate) fn wc(args: Cli) -> Result<(), Error> {
 
-    if let Some(file_names) = args.files {
-        let mut summaries = summarize_files(file_names);
+    if let Some(file_names) = &args.files {
+        let mut summaries = summarize_files(&file_names, &args);
 
         let max_len = get_totals(&mut summaries);
 
@@ -61,6 +63,7 @@ fn get_totals(summaries: &mut Vec<WCResult>) -> usize {
     let mut total_summary = FileSummary {
         lines: 0,
         words: 0,
+        chars: 0,
         bytes: 0,
         label: "total".to_owned(),
     };
@@ -71,13 +74,13 @@ fn get_totals(summaries: &mut Vec<WCResult>) -> usize {
             if summaries.len() > 1 {
                 total_summary.lines += filsm.lines;
                 total_summary.words += filsm.words;
-                total_summary.bytes += filsm.bytes;
+                total_summary.chars += filsm.chars;
             }
 
             // get longest number
             max_len = max(max_len, filsm.lines.to_string().len());
             max_len = max(max_len, filsm.words.to_string().len());
-            max_len = max(max_len, filsm.bytes.to_string().len());
+            max_len = max(max_len, filsm.chars.to_string().len());
         }
     }
 
@@ -85,9 +88,9 @@ fn get_totals(summaries: &mut Vec<WCResult>) -> usize {
         // max len might be longer here if other totals make longer numbers
         max_len = max(max_len, total_summary.lines.to_string().len());
         max_len = max(max_len, total_summary.words.to_string().len());
-        max_len = max(max_len, total_summary.bytes.to_string().len());
+        max_len = max(max_len, total_summary.chars.to_string().len());
 
-    summaries.push(WCResult::FileStats(total_summary));
+        summaries.push(WCResult::FileStats(total_summary));
     }
 
     max_len
@@ -103,14 +106,14 @@ fn get_totals(summaries: &mut Vec<WCResult>) -> usize {
 /// 
 /// * `file_names` - a pointer to an array of Strings that are file names 
 /// recieved from the user at the command line.
-fn summarize_files(file_names: Vec<String>) -> Vec<WCResult> {
+fn summarize_files(file_names: &Vec<String>, args: &Cli) -> Vec<WCResult> {
     let mut summaries: Vec<WCResult> = Vec::new();
 
     for file_path in file_names.iter() {
         let contents = fs::read_to_string(file_path);
         match contents {
             Ok(c) => {
-                let mut summary = handle_file_contents(c);
+                let mut summary = handle_file_contents(c, args);
                 summary.label = file_path.to_owned();
                 summaries.push(WCResult::FileStats(summary));
             },
@@ -167,10 +170,11 @@ fn format_summary(f: &FileSummary, padding: usize) -> String {
 /// `FileSummary` struct.
 /// # Arguments
 /// * `contents` - the contents of the file in question, as a `String`.
-fn handle_file_contents(contents: String) -> FileSummary {
+fn handle_file_contents(contents: String, args: &Cli) -> FileSummary {
     let mut fs = FileSummary { 
         lines: 0, 
-        words: 0, 
+        words: 0,
+        chars: 0,
         bytes: 0, 
         label: "".to_owned()
     };
@@ -178,10 +182,22 @@ fn handle_file_contents(contents: String) -> FileSummary {
     // The lines() function checks for either \n or \r\n. Final line ending is optional.
     // So a file ending in an empty line is the same as one with no final line ending.
     // See rust docs for core::str::lines().
-    fs.lines = contents.lines().count();
-    fs.words = contents.split_ascii_whitespace().count();
-    fs.bytes = contents.len();
+    if args.lines {
+        fs.lines = contents.lines().count();
+    }
+    
+    if args.words {
+        fs.words = contents.split_ascii_whitespace().count();
+    }
 
+    if args.chars {
+        fs.chars = contents.chars().count();
+    }
+
+    if args.bytes {
+        fs.bytes = contents.len();
+    }
+    
     fs
 }
 
@@ -189,35 +205,50 @@ fn handle_file_contents(contents: String) -> FileSummary {
 mod tests {
     use super::*;
 
+    fn get_default_args() -> Cli {
+        Cli {
+            lines: true,
+            bytes: false,
+            chars: true,
+            words: true,
+            max_line_length: None,
+            files: None
+        }
+    }
+
     fn check_file_summary_val(num_found: usize, num_expected: usize, val_type: String) {
         assert_eq!(num_found, num_expected,
             "wc should have counted {} {}(s), but found {}",
-            num_found,
+            num_expected,
             val_type,
-            num_expected);
+            num_found);
     }
 
     #[test]
     // Simple test to make sure handle_file_contents counts words and stuff.
     fn test_handle_file_contents_1() {
         let simple_str = "this is a short bit of text".to_owned();
-        let fs = handle_file_contents(simple_str);
+        let args = get_default_args();
+        let fs = handle_file_contents(simple_str, &args);
         check_file_summary_val(fs.lines, 1, "line".to_owned());
         check_file_summary_val(fs.words, 7, "word".to_owned());
-        check_file_summary_val(fs.bytes, 27, "byte".to_owned());
+        check_file_summary_val(fs.chars, 27, "byte".to_owned());
     }
 
     #[test]
     // Read the file trees.txt and get various counts for it.
     fn read_trees() {
-        let file_sum = summarize_files(vec!["src/wc/test_files/trees.txt".to_owned()]);
+        let args = get_default_args();
+        let file_sum = summarize_files(
+            &vec!["src/wc/test_files/trees.txt".to_owned()],
+            &args);
         assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
 
         match &file_sum[0] {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 21, "line".to_owned());
                 check_file_summary_val(fs.words, 83, "word".to_owned());
-                check_file_summary_val(fs.bytes, 415, "byte".to_owned());
+                check_file_summary_val(fs.chars, 415, "char".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -226,14 +257,17 @@ mod tests {
     }
     #[test]
     fn read_fire() {
-        let file_sum = summarize_files(vec!["src/wc/test_files/fire_and_ice.txt".to_owned()]);
+        let args = get_default_args();
+        let file_sum = summarize_files(
+            &vec!["src/wc/test_files/fire_and_ice.txt".to_owned()],
+            &args);
         assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
 
         match &file_sum[0] {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 13, "line".to_owned());
                 check_file_summary_val(fs.words, 56, "word".to_owned());
-                check_file_summary_val(fs.bytes, 272, "byte".to_owned());
+                check_file_summary_val(fs.chars, 272, "char".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -243,14 +277,17 @@ mod tests {
 
     #[test]
     fn read_so_tired() {
-        let file_sum = summarize_files(vec!["src/wc/test_files/so_tired_blues.txt".to_owned()]);
+        let args = get_default_args();
+        let file_sum = summarize_files(
+            &vec!["src/wc/test_files/so_tired_blues.txt".to_owned()],
+            &args);
         assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
 
         match &file_sum[0] {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 9, "line".to_owned());
                 check_file_summary_val(fs.words, 26, "word".to_owned());
-                check_file_summary_val(fs.bytes, 131, "byte".to_owned());
+                check_file_summary_val(fs.chars, 131, "char".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -260,17 +297,20 @@ mod tests {
 
     #[test]
     fn read_so_tired_and_fire() {
-        let file_sum = summarize_files(vec![
+        let args = get_default_args();
+        let file_sum = summarize_files(
+            &vec![
             "src/wc/test_files/so_tired_blues.txt".to_owned(),
             "src/wc/test_files/fire_and_ice.txt".to_owned()
-        ]);
+            ],
+            &args);
         assert_eq!(file_sum.len(), 2); // there should be two items in this vec.
 
         match &file_sum[0] {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 9, "line".to_owned());
                 check_file_summary_val(fs.words, 26, "word".to_owned());
-                check_file_summary_val(fs.bytes, 131, "byte".to_owned());
+                check_file_summary_val(fs.chars, 131, "char".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -281,7 +321,7 @@ mod tests {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 13, "line".to_owned());
                 check_file_summary_val(fs.words, 56, "word".to_owned());
-                check_file_summary_val(fs.bytes, 272, "byte".to_owned());
+                check_file_summary_val(fs.chars, 272, "char".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -291,14 +331,17 @@ mod tests {
 
     #[test]
     fn read_dracula() {
-        let file_sum = summarize_files(vec!["src/wc/test_files/dracula.txt".to_owned()]);
+        let args = get_default_args();
+        let file_sum = summarize_files(
+            &vec!["src/wc/test_files/dracula.txt".to_owned()],
+            &args);
         assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
 
         match &file_sum[0] {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 15857, "line".to_owned());
                 check_file_summary_val(fs.words, 164382, "word".to_owned());
-                check_file_summary_val(fs.bytes, 881220, "byte".to_owned());
+                check_file_summary_val(fs.chars, 881220, "char".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -308,14 +351,17 @@ mod tests {
 
     #[test]
     fn read_frank() {
-        let file_sum = summarize_files(vec!["src/wc/test_files/frankenstein.txt".to_owned()]);
+        let args = get_default_args();
+        let file_sum = summarize_files(
+            &vec!["src/wc/test_files/frankenstein.txt".to_owned()],
+            &args);
         assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
 
         match &file_sum[0] {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 7741, "line".to_owned());
                 check_file_summary_val(fs.words, 78122, "word".to_owned());
-                check_file_summary_val(fs.bytes, 448817, "byte".to_owned());
+                check_file_summary_val(fs.chars, 448817, "char".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -325,14 +371,17 @@ mod tests {
 
     #[test]
     fn read_moby() {
-        let file_sum = summarize_files(vec!["src/wc/test_files/moby_dick.txt".to_owned()]);
+        let args = get_default_args();
+        let file_sum = summarize_files(
+            &vec!["src/wc/test_files/moby_dick.txt".to_owned()],
+            &args);
         assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
 
         match &file_sum[0] {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 22314, "line".to_owned());
                 check_file_summary_val(fs.words, 215864, "word".to_owned());
-                check_file_summary_val(fs.bytes, 1276231, "byte".to_owned());
+                check_file_summary_val(fs.chars, 1276231, "char".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -342,7 +391,10 @@ mod tests {
 
     #[test]
     fn read_err() {
-        let file_sum = summarize_files(vec!["src/wc/test_files/does_not_exist.txt".to_owned()]);
+        let args = get_default_args();
+        let file_sum = summarize_files(
+            &vec!["src/wc/test_files/does_not_exist.txt".to_owned()],
+            &args);
         assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
 
         match &file_sum[0] {
@@ -361,8 +413,8 @@ mod tests {
 
     #[test]
     fn test_get_totals() {
-        let f1 = FileSummary {lines: 1, words: 1, bytes: 1, label: "file_1".to_owned()};
-        let f2 = FileSummary {lines: 2, words: 2, bytes: 2, label: "file_2".to_owned()};
+        let f1 = FileSummary {lines: 1, words: 1, chars: 1, bytes: 1, label: "file_1".to_owned()};
+        let f2 = FileSummary {lines: 2, words: 2, chars: 1, bytes: 2, label: "file_2".to_owned()};
 
         let mut fv = vec!();
         fv.push(WCResult::FileStats(f1));
@@ -387,7 +439,7 @@ mod tests {
 
     #[test]
     fn test_no_totals_with_one_file() {
-        let f1 = FileSummary {lines: 1, words: 1, bytes: 1, label: "file_1".to_owned()};
+        let f1 = FileSummary {lines: 1, words: 1, chars: 1, bytes: 1, label: "file_1".to_owned()};
 
         let mut fv = vec!();
         fv.push(WCResult::FileStats(f1));
@@ -411,10 +463,13 @@ mod tests {
 
     #[test]
     fn read_err_2() {
-        let file_sum = summarize_files(vec![
-            "src/wc/test_files/does_not_exist.txt".to_owned(),
-            "src/wc/test_files/moby_dick.txt".to_owned()
-        ]);
+        let args = get_default_args();
+        let file_sum = summarize_files(
+            &vec![
+                "src/wc/test_files/does_not_exist.txt".to_owned(),
+                "src/wc/test_files/moby_dick.txt".to_owned()
+                ],
+            &args);
         assert_eq!(file_sum.len(), 2); // there should be just one item in this vec.
 
         match &file_sum[0] {
@@ -438,7 +493,7 @@ mod tests {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 22314, "line".to_owned());
                 check_file_summary_val(fs.words, 215864, "word".to_owned());
-                check_file_summary_val(fs.bytes, 1276231, "byte".to_owned());
+                check_file_summary_val(fs.chars, 1276231, "char".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -448,18 +503,21 @@ mod tests {
 
     #[test]
     fn read_err_3() {
-        let file_sum = summarize_files(vec![
+        let args = get_default_args();
+        let file_sum = summarize_files(
+            &vec![
             "src/wc/test_files/frankenstein.txt".to_owned(),
             "src/wc/test_files/does_not_exist.txt".to_owned(),
             "src/wc/test_files/moby_dick.txt".to_owned()
-        ]);
+            ],
+            &args);
         assert_eq!(file_sum.len(), 3); // there should be just one item in this vec.
 
         match &file_sum[0] {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 7741, "line".to_owned());
                 check_file_summary_val(fs.words, 78122, "word".to_owned());
-                check_file_summary_val(fs.bytes, 448817, "byte".to_owned());
+                check_file_summary_val(fs.chars, 448817, "char".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -486,7 +544,7 @@ mod tests {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 22314, "line".to_owned());
                 check_file_summary_val(fs.words, 215864, "word".to_owned());
-                check_file_summary_val(fs.bytes, 1276231, "byte".to_owned());
+                check_file_summary_val(fs.chars, 1276231, "char".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -496,23 +554,26 @@ mod tests {
 
     #[test]
     fn test_format_summary_padding_5() {
-        let ws = FileSummary{lines: 1, words: 1, bytes: 1, label: "thing".to_owned()};
+        let ws = FileSummary{lines: 1, words: 1, chars: 1, bytes: 1, label: "thing".to_owned()};
         let s = format_summary(&ws, 5);
         assert_eq!(s, "    1     1     1 thing");
     }
 
     #[test]
     fn test_format_summary_padding_2() {
-        let ws = FileSummary{lines: 1, words: 1, bytes: 1, label: "thing".to_owned()};
+        let ws = FileSummary{lines: 1, words: 1, chars: 1, bytes: 1, label: "thing".to_owned()};
         let s = format_summary(&ws, 2);
         assert_eq!(s, " 1  1  1 thing");
     }
 
     #[test]
     fn test_format_summary_padding_3() {
-        let mut file_sum = summarize_files(vec![
+        let args = get_default_args();
+        let mut file_sum = summarize_files(
+            &vec![
             "src/wc/test_files/dracula.txt".to_owned(),
-            "src/wc/test_files/frankenstein.txt".to_owned()]);
+            "src/wc/test_files/frankenstein.txt".to_owned()],
+            &args);
         let max_len = get_totals(&mut file_sum);
         assert_eq!(max_len, 7, "Max length should have been 7, but was {}", max_len);
     }

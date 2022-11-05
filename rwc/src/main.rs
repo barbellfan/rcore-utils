@@ -25,20 +25,31 @@ struct Cli {
     /// print the character counts
     chars: bool,
 
-    #[arg(short = 'L', long = "max-line-length")]
-    /// print the maximum display width
-    max_line_length: Option<i32>,
-
     #[arg(short = 'w', long)]
     /// print the word counts
     words: bool,
+
+    #[arg(short = 'L', long = "max-line-length")]
+    /// print the maximum display width
+    max_line_length: Option<i32>,
 
     files: Option<Vec<String>>,
 }
 
 /// Entry point for the program.
 fn main() -> Result<(), Error> {
-    let clap_args = Cli::parse();
+    let mut clap_args = Cli::parse();
+
+    // if all are set to false, then none were set on the command line
+    // set all but bytes to true
+    if clap_args.lines == false 
+        && clap_args.chars == false 
+        && clap_args.bytes == false 
+        && clap_args.words == false {
+        clap_args.lines = true;
+        clap_args.chars = true;
+        clap_args.words = true;
+    }
 
     if let Some(_) = clap_args.files {
         wc::wc(clap_args)
