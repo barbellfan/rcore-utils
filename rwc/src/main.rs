@@ -43,11 +43,11 @@ fn main() -> Result<(), Error> {
     // if all are set to false, then none were set on the command line
     // set all but bytes to true
     if clap_args.lines == false 
-        && clap_args.chars == false 
         && clap_args.bytes == false 
-        && clap_args.words == false {
+        && clap_args.words == false
+        && clap_args.chars == false {
         clap_args.lines = true;
-        clap_args.chars = true;
+        clap_args.bytes = true;
         clap_args.words = true;
     }
 
