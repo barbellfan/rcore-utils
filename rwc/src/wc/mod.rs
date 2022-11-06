@@ -205,6 +205,9 @@ fn handle_file_contents(contents: String, args: &Cli) -> FileSummary {
 mod tests {
     use super::*;
 
+    /// Helper method to create default input from the user. Default means no
+    /// special arguments, which means they want to show line, byte, and word
+    /// counts. Tests can adjust as needed.
     fn get_default_args() -> Cli {
         Cli {
             lines: true,

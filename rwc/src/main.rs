@@ -9,30 +9,32 @@ use clap::{Parser};
 
 mod wc; 
 
-/// thing
+/// Struct that contains information about the command line options that were entered.
+/// Used by the `clap` library.
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
     #[arg(short = 'l', long)]
-    /// print the newline count
+    /// Print the newline count
     lines: bool,
 
     #[arg(short = 'c', long)]
-    /// print the byte counts
+    /// Print the byte counts
     bytes: bool,
 
     #[arg(short = 'm', long)]
-    /// print the character counts
+    /// Print the character counts
     chars: bool,
 
     #[arg(short = 'w', long)]
-    /// print the word counts
+    /// Print the word counts
     words: bool,
 
     #[arg(short = 'L', long = "max-line-length")]
-    /// print the maximum display width
+    /// Print the maximum display width
     max_line_length: Option<i32>,
 
+    /// List of files to process
     files: Option<Vec<String>>,
 }
 
