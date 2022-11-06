@@ -9,6 +9,11 @@ mod test {
         Command::cargo_bin("wc").unwrap()
     }
 
+    /// Run wc with one small file:
+    /// `wc tests/test_files/trees.txt`
+    /// Output from wc looks like this:
+    /// ` 21  83 415 tests/test_files/trees.txt`
+    /// Make the output look like that.
     #[test]
     fn test_read_trees() -> Result<(), Box<dyn std::error::Error>> {
         let mut cmd = get_cmd();
@@ -22,6 +27,11 @@ mod test {
         Ok(())
     }
 
+    /// Run wc with one small file:
+    /// `wc tests/test_files/fire_and_ice.txt`
+    /// Output from wc looks like this:
+    /// ` 13  56 272 tests/test_files/fire_and_ice.txt`
+    /// Make the output look like that.
     #[test]
     fn read_fire() -> Result<(), Box<dyn std::error::Error>> {
         let mut cmd = get_cmd();
@@ -35,6 +45,11 @@ mod test {
         Ok(())
     }
 
+    /// Run wc with one small file:
+    /// `wc tests/test_files/so_tired_blues.txt`
+    /// Output from wc looks like this:
+    /// `  9  26 131 tests/test_files/so_tired_blues.txt`
+    /// Make the output look like that.
     #[test]
     fn read_so_tired() -> Result<(), Box<dyn std::error::Error>> {
         let mut cmd = get_cmd();
@@ -48,6 +63,13 @@ mod test {
         Ok(())
     }
 
+    /// Run wc with two small files in this order:
+    /// `wc tests/test_files/so_tired_blues.txt tests/test_files/fire_and_ice.txt`
+    /// Output from wc looks like this:
+    /// `  9  26 131 tests/test_files/so_tired_blues.txt`
+    /// ` 13  56 272 tests/test_files/fire_and_ice.txt`
+    /// ` 22  82 403 total`
+    /// Make the output look like that.
     #[test]
     fn read_so_tired_and_fire() -> Result<(), Box<dyn std::error::Error>> {
         let expected = concat!(
@@ -68,6 +90,11 @@ mod test {
         Ok(())
     }
 
+    /// Run wc with one big file:
+    /// `wc tests/test_files/dracula.txt`
+    /// Output from wc looks like this:
+    /// ` 15857 164382 881220 tests/test_files/dracula.txt`
+    /// Make the output look like that.
     #[test]
     fn read_dracula() -> Result<(), Box<dyn std::error::Error>> {
         let expected = " 15857 164382 881220 tests/test_files/dracula.txt\n";
@@ -83,6 +110,11 @@ mod test {
         Ok(())
     }
 
+    /// Run wc with one big file:
+    /// `wc tests/test_files/frankenstein.txt`
+    /// Output from wc looks like this:
+    /// `  7741  78122 448817 tests/test_files/frankenstein.txt`
+    /// Make the output look like that.
     #[test]
     fn read_frank() -> Result<(), Box<dyn std::error::Error>> {
         let expected = "  7741  78122 448817 tests/test_files/frankenstein.txt\n";
@@ -98,6 +130,11 @@ mod test {
         Ok(())
     }
 
+    /// Run wc with one big file:
+    /// `wc tests/test_files/moby_dick.txt`
+    /// Output from wc looks like this:
+    /// `  22314  215864 1276231 tests/test_files/moby_dick.txt`
+    /// Make the output look like that.
     #[test]
     fn read_moby() -> Result<(), Box<dyn std::error::Error>> {
         let expected = "  22314  215864 1276231 tests/test_files/moby_dick.txt\n";
@@ -113,6 +150,11 @@ mod test {
         Ok(())
     }
 
+    /// Run wc with a file that does not exist, like this:
+    /// `wc tests/test_files/does_not_exist.txt`
+    /// Output from wc looks like this:
+    /// `wc: tests/test_files/does_not_exist.txt: No such file or directory`
+    /// Make the output look like that.
     #[test]
     fn read_err() -> Result<(), Box<dyn std::error::Error>> {
         let expected_linux = "No such file or directory (os error 2): tests/test_files/does_not_exist.txt\n";
@@ -133,6 +175,14 @@ mod test {
         Ok(())
     }
 
+    /// Run wc with three big files in this order:
+    /// `wc tests/test_files/moby_dick.txt tests/test_files/frankenstein.txt tests/test_files/dracula.txt`
+    /// Output from wc looks like this:
+    /// `  22314  215864 1276231 tests/test_files/moby_dick.txt`
+    /// `   7741   78122  448817 tests/test_files/frankenstein.txt`
+    /// `  15857  164382  881220 tests/test_files/dracula.txt`
+    /// `  45912  458368 2606268 total`
+    /// Make the output look like that.
     #[test]
     fn read_3_big_files() -> Result<(), Box<dyn std::error::Error>> {
         let expected = concat!(
