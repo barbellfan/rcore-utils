@@ -243,7 +243,7 @@ mod tests {
     fn read_trees() {
         let args = get_default_args();
         let file_sum = summarize_files(
-            &vec!["src/wc/test_files/trees.txt".to_owned()],
+            &vec!["tests/test_files/trees.txt".to_owned()],
             &args);
         assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
 
@@ -262,7 +262,7 @@ mod tests {
     fn read_fire() {
         let args = get_default_args();
         let file_sum = summarize_files(
-            &vec!["src/wc/test_files/fire_and_ice.txt".to_owned()],
+            &vec!["tests/test_files/fire_and_ice.txt".to_owned()],
             &args);
         assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
 
@@ -282,7 +282,7 @@ mod tests {
     fn read_so_tired() {
         let args = get_default_args();
         let file_sum = summarize_files(
-            &vec!["src/wc/test_files/so_tired_blues.txt".to_owned()],
+            &vec!["tests/test_files/so_tired_blues.txt".to_owned()],
             &args);
         assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
 
@@ -303,8 +303,8 @@ mod tests {
         let args = get_default_args();
         let file_sum = summarize_files(
             &vec![
-            "src/wc/test_files/so_tired_blues.txt".to_owned(),
-            "src/wc/test_files/fire_and_ice.txt".to_owned()
+            "tests/test_files/so_tired_blues.txt".to_owned(),
+            "tests/test_files/fire_and_ice.txt".to_owned()
             ],
             &args);
         assert_eq!(file_sum.len(), 2); // there should be two items in this vec.
@@ -336,7 +336,7 @@ mod tests {
     fn read_dracula() {
         let args = get_default_args();
         let file_sum = summarize_files(
-            &vec!["src/wc/test_files/dracula.txt".to_owned()],
+            &vec!["tests/test_files/dracula.txt".to_owned()],
             &args);
         assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
 
@@ -356,7 +356,7 @@ mod tests {
     fn read_frank() {
         let args = get_default_args();
         let file_sum = summarize_files(
-            &vec!["src/wc/test_files/frankenstein.txt".to_owned()],
+            &vec!["tests/test_files/frankenstein.txt".to_owned()],
             &args);
         assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
 
@@ -376,7 +376,7 @@ mod tests {
     fn read_moby() {
         let args = get_default_args();
         let file_sum = summarize_files(
-            &vec!["src/wc/test_files/moby_dick.txt".to_owned()],
+            &vec!["tests/test_files/moby_dick.txt".to_owned()],
             &args);
         assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
 
@@ -396,7 +396,7 @@ mod tests {
     fn read_err() {
         let args = get_default_args();
         let file_sum = summarize_files(
-            &vec!["src/wc/test_files/does_not_exist.txt".to_owned()],
+            &vec!["tests/test_files/does_not_exist.txt".to_owned()],
             &args);
         assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
 
@@ -406,7 +406,7 @@ mod tests {
             },
             WCResult::ErrMsg(e) => {
                 match std::env::consts::OS {
-                    "linux" => assert_eq!(e, "No such file or directory (os error 2): src/wc/test_files/does_not_exist.txt"),
+                    "linux" => assert_eq!(e, "No such file or directory (os error 2): tests/test_files/does_not_exist.txt"),
                     "windows" => assert_eq!(e, "The system cannot find the file specified. (os error 2): src/wc/test_files/does_not_exist.txt"),
                     _ => panic!("Not tested on this operating system: {}", std::env::consts::OS),
                 };
@@ -469,8 +469,8 @@ mod tests {
         let args = get_default_args();
         let file_sum = summarize_files(
             &vec![
-                "src/wc/test_files/does_not_exist.txt".to_owned(),
-                "src/wc/test_files/moby_dick.txt".to_owned()
+                "tests/test_files/does_not_exist.txt".to_owned(),
+                "tests/test_files/moby_dick.txt".to_owned()
                 ],
             &args);
         assert_eq!(file_sum.len(), 2); // there should be just one item in this vec.
@@ -480,7 +480,7 @@ mod tests {
                 panic!("Should not have found the file");
             },
             WCResult::ErrMsg(e) => {
-                let expected_linux = "No such file or directory (os error 2): src/wc/test_files/does_not_exist.txt";
+                let expected_linux = "No such file or directory (os error 2): tests/test_files/does_not_exist.txt";
                 let expected_windows = "The system cannot find the file specified. (os error 2): src/wc/test_files/does_not_exist.txt";
                 let expected = match std::env::consts::OS {
                     "linux" => expected_linux,
@@ -509,9 +509,9 @@ mod tests {
         let args = get_default_args();
         let file_sum = summarize_files(
             &vec![
-            "src/wc/test_files/frankenstein.txt".to_owned(),
-            "src/wc/test_files/does_not_exist.txt".to_owned(),
-            "src/wc/test_files/moby_dick.txt".to_owned()
+            "tests/test_files/frankenstein.txt".to_owned(),
+            "tests/test_files/does_not_exist.txt".to_owned(),
+            "tests/test_files/moby_dick.txt".to_owned()
             ],
             &args);
         assert_eq!(file_sum.len(), 3); // there should be just one item in this vec.
@@ -532,7 +532,7 @@ mod tests {
                 panic!("Should not have found the file");
             },
             WCResult::ErrMsg(e) => {
-                let expected_linux = "No such file or directory (os error 2): src/wc/test_files/does_not_exist.txt";
+                let expected_linux = "No such file or directory (os error 2): tests/test_files/does_not_exist.txt";
                 let expected_windows = "The system cannot find the file specified. (os error 2): src/wc/test_files/does_not_exist.txt";
                 let expected = match std::env::consts::OS {
                     "linux" => expected_linux,
@@ -574,8 +574,8 @@ mod tests {
         let args = get_default_args();
         let mut file_sum = summarize_files(
             &vec![
-            "src/wc/test_files/dracula.txt".to_owned(),
-            "src/wc/test_files/frankenstein.txt".to_owned()],
+            "tests/test_files/dracula.txt".to_owned(),
+            "tests/test_files/frankenstein.txt".to_owned()],
             &args);
         let max_len = get_totals(&mut file_sum);
         assert_eq!(max_len, 7, "Max length should have been 7, but was {}", max_len);
