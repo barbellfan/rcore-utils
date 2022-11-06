@@ -27,6 +27,66 @@ mod test {
         Ok(())
     }
 
+    /// Run wc with one small file and the -l switch:
+    /// `wc -l tests/test_files/trees.txt`
+    /// Output from wc looks like this:
+    /// `21 tests/test_files/trees.txt`
+    /// Make the output look like that.
+    #[test]
+    fn test_read_lines_trees() -> Result<(), Box<dyn std::error::Error>> {
+        let mut cmd = get_cmd();
+
+        cmd.arg("-l")
+            .arg("tests/test_files/trees.txt");
+            
+        cmd.assert()
+            .success()
+            .stdout(predicate::eq("21 tests/test_files/trees.txt\n"))
+            .code(predicate::eq(0));
+
+        Ok(())
+    }
+
+    /// Run wc with one small file and the -c switch:
+    /// `wc -c tests/test_files/trees.txt`
+    /// Output from wc looks like this:
+    /// `21 tests/test_files/trees.txt`
+    /// Make the output look like that.
+    #[test]
+    fn test_read_bytes_trees() -> Result<(), Box<dyn std::error::Error>> {
+        let mut cmd = get_cmd();
+
+        cmd.arg("-c")
+            .arg("tests/test_files/trees.txt");
+            
+        cmd.assert()
+            .success()
+            .stdout(predicate::eq("415 tests/test_files/trees.txt\n"))
+            .code(predicate::eq(0));
+
+        Ok(())
+    }
+
+    /// Run wc with one small file and the -w switch:
+    /// `wc -w tests/test_files/trees.txt`
+    /// Output from wc looks like this:
+    /// `21 tests/test_files/trees.txt`
+    /// Make the output look like that.
+    #[test]
+    fn test_read_words_trees() -> Result<(), Box<dyn std::error::Error>> {
+        let mut cmd = get_cmd();
+
+        cmd.arg("-w")
+            .arg("tests/test_files/trees.txt");
+            
+        cmd.assert()
+            .success()
+            .stdout(predicate::eq("83 tests/test_files/trees.txt\n"))
+            .code(predicate::eq(0));
+
+        Ok(())
+    }
+
     /// Run wc with one small file:
     /// `wc tests/test_files/fire_and_ice.txt`
     /// Output from wc looks like this:
