@@ -9,9 +9,6 @@ mod test {
         Command::cargo_bin("wc").unwrap()
     }
 
-    // try using predicate::eq for the stdout strings
-    // concat strings as needed to build up multiline output
-
     #[test]
     fn test_read_trees() -> Result<(), Box<dyn std::error::Error>> {
         let mut cmd = get_cmd();
