@@ -74,13 +74,13 @@ fn get_totals(summaries: &mut Vec<WCResult>) -> usize {
             if summaries.len() > 1 {
                 total_summary.lines += filsm.lines;
                 total_summary.words += filsm.words;
-                total_summary.chars += filsm.chars;
+                total_summary.bytes += filsm.bytes;
             }
 
             // get longest number
             max_len = max(max_len, filsm.lines.to_string().len());
             max_len = max(max_len, filsm.words.to_string().len());
-            max_len = max(max_len, filsm.chars.to_string().len());
+            max_len = max(max_len, filsm.bytes.to_string().len());
         }
     }
 
@@ -88,7 +88,7 @@ fn get_totals(summaries: &mut Vec<WCResult>) -> usize {
         // max len might be longer here if other totals make longer numbers
         max_len = max(max_len, total_summary.lines.to_string().len());
         max_len = max(max_len, total_summary.words.to_string().len());
-        max_len = max(max_len, total_summary.chars.to_string().len());
+        max_len = max(max_len, total_summary.bytes.to_string().len());
 
         summaries.push(WCResult::FileStats(total_summary));
     }
@@ -208,8 +208,8 @@ mod tests {
     fn get_default_args() -> Cli {
         Cli {
             lines: true,
-            bytes: false,
-            chars: true,
+            bytes: true,
+            chars: false,
             words: true,
             max_line_length: None,
             files: None
@@ -232,7 +232,7 @@ mod tests {
         let fs = handle_file_contents(simple_str, &args);
         check_file_summary_val(fs.lines, 1, "line".to_owned());
         check_file_summary_val(fs.words, 7, "word".to_owned());
-        check_file_summary_val(fs.chars, 27, "byte".to_owned());
+        check_file_summary_val(fs.bytes, 27, "byte".to_owned());
     }
 
     #[test]
@@ -248,7 +248,7 @@ mod tests {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 21, "line".to_owned());
                 check_file_summary_val(fs.words, 83, "word".to_owned());
-                check_file_summary_val(fs.chars, 415, "char".to_owned());
+                check_file_summary_val(fs.bytes, 415, "byte".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -267,7 +267,7 @@ mod tests {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 13, "line".to_owned());
                 check_file_summary_val(fs.words, 56, "word".to_owned());
-                check_file_summary_val(fs.chars, 272, "char".to_owned());
+                check_file_summary_val(fs.bytes, 272, "byte".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -287,7 +287,7 @@ mod tests {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 9, "line".to_owned());
                 check_file_summary_val(fs.words, 26, "word".to_owned());
-                check_file_summary_val(fs.chars, 131, "char".to_owned());
+                check_file_summary_val(fs.bytes, 131, "byte".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -310,7 +310,7 @@ mod tests {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 9, "line".to_owned());
                 check_file_summary_val(fs.words, 26, "word".to_owned());
-                check_file_summary_val(fs.chars, 131, "char".to_owned());
+                check_file_summary_val(fs.bytes, 131, "byte".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -321,7 +321,7 @@ mod tests {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 13, "line".to_owned());
                 check_file_summary_val(fs.words, 56, "word".to_owned());
-                check_file_summary_val(fs.chars, 272, "char".to_owned());
+                check_file_summary_val(fs.bytes, 272, "byte".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -341,7 +341,7 @@ mod tests {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 15857, "line".to_owned());
                 check_file_summary_val(fs.words, 164382, "word".to_owned());
-                check_file_summary_val(fs.chars, 881220, "char".to_owned());
+                check_file_summary_val(fs.bytes, 881220, "byte".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -361,7 +361,7 @@ mod tests {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 7741, "line".to_owned());
                 check_file_summary_val(fs.words, 78122, "word".to_owned());
-                check_file_summary_val(fs.chars, 448817, "char".to_owned());
+                check_file_summary_val(fs.bytes, 448817, "byte".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -381,7 +381,7 @@ mod tests {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 22314, "line".to_owned());
                 check_file_summary_val(fs.words, 215864, "word".to_owned());
-                check_file_summary_val(fs.chars, 1276231, "char".to_owned());
+                check_file_summary_val(fs.bytes, 1276231, "byte".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -493,7 +493,7 @@ mod tests {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 22314, "line".to_owned());
                 check_file_summary_val(fs.words, 215864, "word".to_owned());
-                check_file_summary_val(fs.chars, 1276231, "char".to_owned());
+                check_file_summary_val(fs.bytes, 1276231, "byte".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -517,7 +517,7 @@ mod tests {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 7741, "line".to_owned());
                 check_file_summary_val(fs.words, 78122, "word".to_owned());
-                check_file_summary_val(fs.chars, 448817, "char".to_owned());
+                check_file_summary_val(fs.bytes, 448817, "byte".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -544,7 +544,7 @@ mod tests {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 22314, "line".to_owned());
                 check_file_summary_val(fs.words, 215864, "word".to_owned());
-                check_file_summary_val(fs.chars, 1276231, "char".to_owned());
+                check_file_summary_val(fs.bytes, 1276231, "byte".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
