@@ -31,11 +31,11 @@ pub(crate) fn wc(args: Cli) -> Result<(), Error> {
     if let Some(file_names) = &args.files {
         let mut summaries = summarize_files(&file_names, &args);
 
-        let max_len = get_totals(&mut summaries);
+        let max_len = get_totals(&mut summaries, &args);
 
         summaries.iter().for_each(|file_summary_result| {
             match file_summary_result {
-                WCResult::FileStats(s) => println!("{}", format_summary(s, max_len)),
+                WCResult::FileStats(s) => println!("{}", format_summary(s, max_len, &args)),
                 WCResult::ErrMsg(e) => eprintln!("{}", e),
             };
         });
@@ -56,7 +56,7 @@ pub(crate) fn wc(args: Cli) -> Result<(), Error> {
 ///  * `summaries` - A Vec of `WCResult` enums. If there is more than 
 /// one, a `FileSummary` struct with the label "total" is added
 /// at the end. This will contain totals of all the other structs.
-fn get_totals(summaries: &mut Vec<WCResult>) -> usize {
+fn get_totals(summaries: &mut Vec<WCResult>, args: &Cli) -> usize {
     // get longest number so you can set the amount of padding
     // also get a running total of all lines, words, and chars
     let mut max_len = 0;
@@ -78,17 +78,33 @@ fn get_totals(summaries: &mut Vec<WCResult>) -> usize {
             }
 
             // get longest number
-            max_len = max(max_len, filsm.lines.to_string().len());
-            max_len = max(max_len, filsm.words.to_string().len());
-            max_len = max(max_len, filsm.bytes.to_string().len());
+            if args.lines {
+                max_len = max(max_len, filsm.lines.to_string().len());
+            }
+            
+            if args.words {
+                max_len = max(max_len, filsm.words.to_string().len());
+            }
+            
+            if args.bytes {
+                max_len = max(max_len, filsm.bytes.to_string().len());
+            }
         }
     }
 
     if summaries.len() > 1 {
         // max len might be longer here if other totals make longer numbers
-        max_len = max(max_len, total_summary.lines.to_string().len());
-        max_len = max(max_len, total_summary.words.to_string().len());
-        max_len = max(max_len, total_summary.bytes.to_string().len());
+        if args.lines {
+            max_len = max(max_len, total_summary.lines.to_string().len());
+        }
+        
+        if args.words {
+            max_len = max(max_len, total_summary.words.to_string().len());
+        }
+        
+        if args.bytes {
+            max_len = max(max_len, total_summary.bytes.to_string().len());
+        }
 
         summaries.push(WCResult::FileStats(total_summary));
     }
@@ -162,8 +178,21 @@ fn summarize_files(file_names: &Vec<String>, args: &Cli) -> Vec<WCResult> {
 /// * `padding` - the number of spaces to pad between values on a line. Get this by
 /// looping through all of the `FileSummary` structs and getting the largest value, 
 /// meaning the longest number when converted to a `String`.
-fn format_summary(f: &FileSummary, padding: usize) -> String {
-    format!("{:>padding$} {:>padding$} {:>padding$} {}", f.lines, f.words, f.bytes, f.label)
+fn format_summary(f: &FileSummary, padding: usize, args: &Cli) -> String {
+    let mut lines_count = "".to_owned();
+    let mut words_count = "".to_owned();
+    let mut bytes_count = "".to_owned();
+
+    if args.lines {
+        lines_count = format!("{:>padding$} ", f.lines);
+    }
+    if args.words {
+        words_count = format!("{:>padding$} ", f.words);
+    }
+    if args.bytes {
+        bytes_count = format!("{:>padding$} ", f.bytes);
+    }
+    format!("{}{}{}{}", lines_count, words_count, bytes_count, f.label)
 }
 
 /// Utility function to count lines, words, and bytes in the given file. Return a 
@@ -418,12 +447,13 @@ mod tests {
     fn test_get_totals() {
         let f1 = FileSummary {lines: 1, words: 1, chars: 1, bytes: 1, label: "file_1".to_owned()};
         let f2 = FileSummary {lines: 2, words: 2, chars: 1, bytes: 2, label: "file_2".to_owned()};
+        let args = get_default_args();
 
         let mut fv = vec!();
         fv.push(WCResult::FileStats(f1));
         fv.push(WCResult::FileStats(f2));
 
-        get_totals(&mut fv);
+        get_totals(&mut fv, &args);
 
         assert_eq!(fv.len(), 3, "get_totals should have added one item to the vec. Expected length of 3, but found {}", fv.len());
 
@@ -443,11 +473,12 @@ mod tests {
     #[test]
     fn test_no_totals_with_one_file() {
         let f1 = FileSummary {lines: 1, words: 1, chars: 1, bytes: 1, label: "file_1".to_owned()};
+        let args = get_default_args();
 
         let mut fv = vec!();
         fv.push(WCResult::FileStats(f1));
 
-        get_totals(&mut fv);
+        get_totals(&mut fv, &args);
 
         assert_eq!(fv.len(), 1, "get_totals should NOT have added one item to the vec since there was only one item. Expected length of 1, but found {}", fv.len());
 
@@ -558,14 +589,16 @@ mod tests {
     #[test]
     fn test_format_summary_padding_5() {
         let ws = FileSummary{lines: 1, words: 1, chars: 1, bytes: 1, label: "thing".to_owned()};
-        let s = format_summary(&ws, 5);
+        let args = get_default_args();
+        let s = format_summary(&ws, 5, &args);
         assert_eq!(s, "    1     1     1 thing");
     }
 
     #[test]
     fn test_format_summary_padding_2() {
         let ws = FileSummary{lines: 1, words: 1, chars: 1, bytes: 1, label: "thing".to_owned()};
-        let s = format_summary(&ws, 2);
+        let args = get_default_args();
+        let s = format_summary(&ws, 2, &args);
         assert_eq!(s, " 1  1  1 thing");
     }
 
@@ -577,7 +610,7 @@ mod tests {
             "tests/test_files/dracula.txt".to_owned(),
             "tests/test_files/frankenstein.txt".to_owned()],
             &args);
-        let max_len = get_totals(&mut file_sum);
+        let max_len = get_totals(&mut file_sum, &args);
         assert_eq!(max_len, 7, "Max length should have been 7, but was {}", max_len);
     }
 }
