@@ -405,6 +405,86 @@ mod tests {
     }
 
     #[test]
+    fn read_so_tired_and_fire_lines() {
+        let mut args = get_default_args();
+        args.bytes = false;
+        args.chars = false;
+        args.words = false;
+
+        let mut file_sum = summarize_files(
+            &vec![
+            "tests/test_files/so_tired_blues.txt".to_owned(),
+            "tests/test_files/fire_and_ice.txt".to_owned()
+            ],
+            &args);
+
+        assert_eq!(file_sum.len(), 2); // there should be two items in this vec.
+        // Both entries in vec should be FileStats enums
+        assert!(matches!(file_sum[0], WCResult::FileStats(_)));
+        assert!(matches!(file_sum[1], WCResult::FileStats(_)));
+
+        match &file_sum[0] {
+            WCResult::FileStats(fs) => {
+                check_file_summary_val(fs.lines, 9, "line".to_owned());
+                check_file_summary_val(fs.words, 0, "word".to_owned());
+                check_file_summary_val(fs.bytes, 0, "byte".to_owned());
+            },
+            WCResult::ErrMsg(e) => {
+                panic!("Should not have caused an error: {}", e);
+            }
+        }
+
+        match &file_sum[1] {
+            WCResult::FileStats(fs) => {
+                check_file_summary_val(fs.lines, 13, "line".to_owned());
+                check_file_summary_val(fs.words, 0, "word".to_owned());
+                check_file_summary_val(fs.bytes, 0, "byte".to_owned());
+            },
+            WCResult::ErrMsg(e) => {
+                panic!("Should not have caused an error: {}", e);
+            }
+        }
+        let max_len = get_totals(&mut file_sum, &args);
+        assert_eq!(max_len, 2, "max length used for padding should be 2");
+        assert_eq!(file_sum.len(), 3, "vec should have 3 item in it now");
+
+        match &file_sum[0] {
+            WCResult::FileStats(fs)=> {
+                let expected_so_tired_blues = "  9 tests/test_files/so_tired_blues.txt";
+                let found_so_tired_blues = format_summary(fs, max_len, &args);
+                assert_eq!(found_so_tired_blues, expected_so_tired_blues, "Output not correct");
+            },
+            WCResult::ErrMsg(e) => {
+                panic!("Should not have caused an error: {}", e);
+            }
+        }
+        /*
+        
+        match &file_sum[1] {
+            WCResult::FileStats(fs)=> {
+                let expected_fire_and_ice = " 13  56 272 tests/test_files/fire_and_ice.txt";
+                let found_fire_and_ice = format_summary(fs, max_len, &args);
+                assert_eq!(found_fire_and_ice, expected_fire_and_ice, "Output not correct");
+            },
+            WCResult::ErrMsg(e) => {
+                panic!("Should not have caused an error: {}", e);
+            }
+        }
+        
+        match &file_sum[2] {
+            WCResult::FileStats(fs)=> {
+                let expected_total = " 22  82 403 total";
+                let found_total = format_summary(fs, max_len, &args);
+                assert_eq!(found_total, expected_total, "Output not correct");
+            },
+            WCResult::ErrMsg(e) => {
+                panic!("Should not have caused an error: {}", e);
+            }
+        }
+        */
+    }
+
+    #[test]
     fn read_dracula() {
         let args = get_default_args();
         let file_sum = summarize_files(
