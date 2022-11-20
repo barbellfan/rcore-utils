@@ -72,9 +72,15 @@ fn get_totals(summaries: &mut Vec<WCResult>, args: &Cli) -> usize {
         if let WCResult::FileStats(filsm) = file_summary_result {
             // calculate totals if there is more than one file
             if summaries.len() > 1 {
-                total_summary.lines += filsm.lines;
-                total_summary.words += filsm.words;
-                total_summary.bytes += filsm.bytes;
+                if args.lines {
+                    total_summary.lines += filsm.lines;
+                }
+                if args.words {
+                    total_summary.words += filsm.words;
+                }
+                if args.bytes {
+                    total_summary.bytes += filsm.bytes;
+                }
             }
 
             // get longest number
