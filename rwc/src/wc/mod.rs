@@ -178,6 +178,7 @@ fn summarize_files(file_names: &Vec<String>, args: &Cli) -> Vec<WCResult> {
 /// * `padding` - the number of spaces to pad between values on a line. Get this by
 /// looping through all of the `FileSummary` structs and getting the largest value, 
 /// meaning the longest number when converted to a `String`.
+/// * `args` - the command line arguments, as a reference to a `Cli` object
 fn format_summary(f: &FileSummary, padding: usize, args: &Cli) -> String {
     let mut lines_count = "".to_owned();
     let mut words_count = "".to_owned();
@@ -330,13 +331,17 @@ mod tests {
     #[test]
     fn read_so_tired_and_fire() {
         let args = get_default_args();
-        let file_sum = summarize_files(
+        let mut file_sum = summarize_files(
             &vec![
             "tests/test_files/so_tired_blues.txt".to_owned(),
             "tests/test_files/fire_and_ice.txt".to_owned()
             ],
             &args);
+
         assert_eq!(file_sum.len(), 2); // there should be two items in this vec.
+        // Both entries in vec should be FileStats enums
+        assert!(matches!(file_sum[0], WCResult::FileStats(_)));
+        assert!(matches!(file_sum[1], WCResult::FileStats(_)));
 
         match &file_sum[0] {
             WCResult::FileStats(fs) => {
@@ -359,6 +364,44 @@ mod tests {
                 panic!("Should not have caused an error: {}", e);
             }
         }
+
+        let max_len = get_totals(&mut file_sum, &args);
+        assert_eq!(max_len, 3, "max length used for padding should be 3");
+        assert_eq!(file_sum.len(), 3, "vec should have 3 item in it now");
+
+        match &file_sum[0] {
+            WCResult::FileStats(fs)=> {
+                let expected_so_tired_blues = "  9  26 131 tests/test_files/so_tired_blues.txt";
+                let found_so_tired_blues = format_summary(fs, max_len, &args);
+                assert_eq!(found_so_tired_blues, expected_so_tired_blues, "Output not correct");
+            },
+            WCResult::ErrMsg(e) => {
+                panic!("Should not have caused an error: {}", e);
+            }
+        }
+        
+        match &file_sum[1] {
+            WCResult::FileStats(fs)=> {
+                let expected_fire_and_ice = " 13  56 272 tests/test_files/fire_and_ice.txt";
+                let found_fire_and_ice = format_summary(fs, max_len, &args);
+                assert_eq!(found_fire_and_ice, expected_fire_and_ice, "Output not correct");
+            },
+            WCResult::ErrMsg(e) => {
+                panic!("Should not have caused an error: {}", e);
+            }
+        }
+        
+        match &file_sum[2] {
+            WCResult::FileStats(fs)=> {
+                let expected_total = " 22  82 403 total";
+                let found_total = format_summary(fs, max_len, &args);
+                assert_eq!(found_total, expected_total, "Output not correct");
+            },
+            WCResult::ErrMsg(e) => {
+                panic!("Should not have caused an error: {}", e);
+            }
+        }
+        
     }
 
     #[test]
@@ -453,7 +496,8 @@ mod tests {
         fv.push(WCResult::FileStats(f1));
         fv.push(WCResult::FileStats(f2));
 
-        get_totals(&mut fv, &args);
+        let max_len = get_totals(&mut fv, &args);
+        assert_eq!(max_len, 1, "Max length for padding should have been {}, but was {}", max_len, 1);
 
         assert_eq!(fv.len(), 3, "get_totals should have added one item to the vec. Expected length of 3, but found {}", fv.len());
 
@@ -468,6 +512,26 @@ mod tests {
                 panic!("Should not have caused this error: {}", e);
             }
         }
+    }
+
+    #[test]
+    fn test_get_format_summary_lines() {
+        let f1 = FileSummary {lines: 1, words: 11, chars: 111, bytes: 11111, label: "file_1".to_owned()};
+        let f2 = FileSummary {lines: 22, words: 2, chars: 1, bytes: 2, label: "file_2".to_owned()};
+        let mut args = get_default_args();
+        args.lines = true;
+        args.words = false;
+        args.chars = false;
+        args.bytes = false;
+
+        let f1_expected = "  1 file_1";
+        let f2_expected = " 22 file_2";
+
+        let sum1 = format_summary(&f1, 2, &args);
+        let sum2 = format_summary(&f2, 2, &args);
+
+        assert_eq!(sum1, f1_expected);
+        assert_eq!(sum2, f2_expected);
     }
 
     #[test]

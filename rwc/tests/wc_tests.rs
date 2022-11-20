@@ -150,6 +150,34 @@ mod test {
         Ok(())
     }
 
+    /// Run wc with two small files in this order:
+    /// `wc -l tests/test_files/so_tired_blues.txt tests/test_files/fire_and_ice.txt`
+    /// Output from wc looks like this:
+    /// `  9 tests/test_files/so_tired_blues.txt`
+    /// `13 tests/test_files/fire_and_ice.txt`
+    /// `22 total`
+    /// Make the output look like that.
+    #[test]
+    fn read_so_tired_and_fire_lines() -> Result<(), Box<dyn std::error::Error>> {
+        let expected = concat!(
+            "  9 tests/test_files/so_tired_blues.txt\n",
+            " 13 tests/test_files/fire_and_ice.txt\n",
+            " 22 total\n") ;
+
+        let mut cmd = get_cmd();
+
+        cmd.arg("-l")
+            .arg("tests/test_files/so_tired_blues.txt")
+            .arg("tests/test_files/fire_and_ice.txt");
+        
+        cmd.assert()
+            .success()
+            .stdout(predicate::eq(expected))
+            .code(predicate::eq(0));
+        
+        Ok(())
+    }
+
     /// Run wc with one big file:
     /// `wc tests/test_files/dracula.txt`
     /// Output from wc looks like this:
