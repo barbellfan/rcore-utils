@@ -10,9 +10,13 @@ mod test {
     }
 
     /// Run wc with one small file:
-    /// `wc tests/test_files/trees.txt`
+    /// ```
+    /// :~$ wc tests/test_files/trees.txt
+    /// ```
     /// Output from wc looks like this:
-    /// ` 21  83 415 tests/test_files/trees.txt`
+    /// ```
+    ///  21  83 415 tests/test_files/trees.txt
+    /// ```
     /// Make the output look like that.
     #[test]
     fn test_read_trees() -> Result<(), Box<dyn std::error::Error>> {
@@ -28,9 +32,13 @@ mod test {
     }
 
     /// Run wc with one small file and the -l switch:
-    /// `wc -l tests/test_files/trees.txt`
+    /// ```
+    /// :~$ wc -l tests/test_files/trees.txt
+    /// ```
     /// Output from wc looks like this:
-    /// `21 tests/test_files/trees.txt`
+    /// ```
+    ///  21 tests/test_files/trees.txt
+    /// ```
     /// Make the output look like that.
     #[test]
     fn test_read_lines_trees() -> Result<(), Box<dyn std::error::Error>> {
@@ -41,16 +49,20 @@ mod test {
             
         cmd.assert()
             .success()
-            .stdout(predicate::eq("21 tests/test_files/trees.txt\n"))
+            .stdout(predicate::eq(" 21 tests/test_files/trees.txt\n"))
             .code(predicate::eq(0));
 
         Ok(())
     }
 
     /// Run wc with one small file and the -c switch:
-    /// `wc -c tests/test_files/trees.txt`
+    /// ```
+    /// :~$ wc -c tests/test_files/trees.txt
+    /// ```
     /// Output from wc looks like this:
-    /// `21 tests/test_files/trees.txt`
+    /// ```
+    /// 21 tests/test_files/trees.txt
+    /// ```
     /// Make the output look like that.
     #[test]
     fn test_read_bytes_trees() -> Result<(), Box<dyn std::error::Error>> {
@@ -68,9 +80,13 @@ mod test {
     }
 
     /// Run wc with one small file and the -w switch:
-    /// `wc -w tests/test_files/trees.txt`
+    /// ```
+    /// :~$ wc -w tests/test_files/trees.txt
+    /// ```
     /// Output from wc looks like this:
-    /// `21 tests/test_files/trees.txt`
+    /// ```
+    /// 21 tests/test_files/trees.txt
+    /// ```
     /// Make the output look like that.
     #[test]
     fn test_read_words_trees() -> Result<(), Box<dyn std::error::Error>> {
@@ -81,16 +97,20 @@ mod test {
             
         cmd.assert()
             .success()
-            .stdout(predicate::eq("83 tests/test_files/trees.txt\n"))
+            .stdout(predicate::eq(" 83 tests/test_files/trees.txt\n"))
             .code(predicate::eq(0));
 
         Ok(())
     }
 
     /// Run wc with one small file:
-    /// `wc tests/test_files/fire_and_ice.txt`
+    /// ```
+    /// :~$ wc tests/test_files/fire_and_ice.txt
+    /// ```
     /// Output from wc looks like this:
-    /// ` 13  56 272 tests/test_files/fire_and_ice.txt`
+    /// ```
+    ///  13  56 272 tests/test_files/fire_and_ice.txt
+    /// ```
     /// Make the output look like that.
     #[test]
     fn read_fire() -> Result<(), Box<dyn std::error::Error>> {
@@ -106,9 +126,13 @@ mod test {
     }
 
     /// Run wc with one small file:
-    /// `wc tests/test_files/so_tired_blues.txt`
+    /// ```
+    /// :~$ wc tests/test_files/so_tired_blues.txt
+    /// ```
     /// Output from wc looks like this:
-    /// `  9  26 131 tests/test_files/so_tired_blues.txt`
+    /// ```
+    ///   9  26 131 tests/test_files/so_tired_blues.txt
+    /// ```
     /// Make the output look like that.
     #[test]
     fn read_so_tired() -> Result<(), Box<dyn std::error::Error>> {
@@ -124,11 +148,15 @@ mod test {
     }
 
     /// Run wc with two small files in this order:
-    /// `wc tests/test_files/so_tired_blues.txt tests/test_files/fire_and_ice.txt`
+    /// ```
+    /// :~$ wc tests/test_files/so_tired_blues.txt tests/test_files/fire_and_ice.txt
+    /// ```
     /// Output from wc looks like this:
-    /// `  9  26 131 tests/test_files/so_tired_blues.txt`
-    /// ` 13  56 272 tests/test_files/fire_and_ice.txt`
-    /// ` 22  82 403 total`
+    /// ```
+    ///   9  26 131 tests/test_files/so_tired_blues.txt
+    ///  13  56 272 tests/test_files/fire_and_ice.txt
+    ///  22  82 403 total
+    /// ```
     /// Make the output look like that.
     #[test]
     fn read_so_tired_and_fire() -> Result<(), Box<dyn std::error::Error>> {
@@ -151,11 +179,15 @@ mod test {
     }
 
     /// Run wc with two small files in this order:
-    /// `wc -l tests/test_files/so_tired_blues.txt tests/test_files/fire_and_ice.txt`
+    /// ```
+    /// :~$ wc -l tests/test_files/so_tired_blues.txt tests/test_files/fire_and_ice.txt
+    /// ```
     /// Output from wc looks like this:
-    /// `  9 tests/test_files/so_tired_blues.txt`
-    /// `13 tests/test_files/fire_and_ice.txt`
-    /// `22 total`
+    /// ```
+    ///   9 tests/test_files/so_tired_blues.txt
+    /// 13 tests/test_files/fire_and_ice.txt
+    /// 22 total
+    /// ```
     /// Make the output look like that.
     #[test]
     fn read_so_tired_and_fire_lines() -> Result<(), Box<dyn std::error::Error>> {
@@ -179,9 +211,13 @@ mod test {
     }
 
     /// Run wc with one big file:
-    /// `wc tests/test_files/dracula.txt`
+    /// ```
+    /// :~$ wc tests/test_files/dracula.txt
+    /// ```
     /// Output from wc looks like this:
-    /// ` 15857 164382 881220 tests/test_files/dracula.txt`
+    /// ```
+    ///  15857 164382 881220 tests/test_files/dracula.txt
+    /// ```
     /// Make the output look like that.
     #[test]
     fn read_dracula() -> Result<(), Box<dyn std::error::Error>> {
@@ -199,9 +235,13 @@ mod test {
     }
 
     /// Run wc with one big file:
-    /// `wc tests/test_files/frankenstein.txt`
+    /// ```
+    /// :~$ wc tests/test_files/frankenstein.txt
+    /// ```
     /// Output from wc looks like this:
-    /// `  7741  78122 448817 tests/test_files/frankenstein.txt`
+    /// ```
+    ///   7741  78122 448817 tests/test_files/frankenstein.txt
+    /// ```
     /// Make the output look like that.
     #[test]
     fn read_frank() -> Result<(), Box<dyn std::error::Error>> {
@@ -219,9 +259,13 @@ mod test {
     }
 
     /// Run wc with one big file:
-    /// `wc tests/test_files/moby_dick.txt`
+    /// ```
+    /// :~$ wc tests/test_files/moby_dick.txt
+    /// ```
     /// Output from wc looks like this:
-    /// `  22314  215864 1276231 tests/test_files/moby_dick.txt`
+    /// ```
+    ///   22314  215864 1276231 tests/test_files/moby_dick.txt
+    /// ```
     /// Make the output look like that.
     #[test]
     fn read_moby() -> Result<(), Box<dyn std::error::Error>> {
@@ -239,10 +283,14 @@ mod test {
     }
 
     /// Run wc with a file that does not exist, like this:
-    /// `wc tests/test_files/does_not_exist.txt`
+    /// ```
+    /// :~$ wc tests/test_files/does_not_exist.txt
+    /// ```
     /// Output from wc looks like this:
-    /// `wc: tests/test_files/does_not_exist.txt: No such file or directory`
-    /// Make the output look like that.
+    /// ```
+    /// wc: tests/test_files/does_not_exist.txt: No such file or directory
+    /// ```
+    /// Make the output look like that, depending on the OS.
     #[test]
     fn read_err() -> Result<(), Box<dyn std::error::Error>> {
         let expected_linux = "No such file or directory (os error 2): tests/test_files/does_not_exist.txt\n";
@@ -264,12 +312,16 @@ mod test {
     }
 
     /// Run wc with three big files in this order:
-    /// `wc tests/test_files/moby_dick.txt tests/test_files/frankenstein.txt tests/test_files/dracula.txt`
+    /// ```
+    /// :~$ wc tests/test_files/moby_dick.txt tests/test_files/frankenstein.txt tests/test_files/dracula.txt
+    /// ```
     /// Output from wc looks like this:
-    /// `  22314  215864 1276231 tests/test_files/moby_dick.txt`
-    /// `   7741   78122  448817 tests/test_files/frankenstein.txt`
-    /// `  15857  164382  881220 tests/test_files/dracula.txt`
-    /// `  45912  458368 2606268 total`
+    /// ```
+    ///   22314  215864 1276231 tests/test_files/moby_dick.txt
+    ///    7741   78122  448817 tests/test_files/frankenstein.txt
+    ///   15857  164382  881220 tests/test_files/dracula.txt
+    ///   45912  458368 2606268 total
+    /// ```
     /// Make the output look like that.
     #[test]
     fn read_3_big_files() -> Result<(), Box<dyn std::error::Error>> {

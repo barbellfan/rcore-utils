@@ -83,7 +83,9 @@ fn get_current_exe_name() -> Option<String> {
         .to_owned()
         .into()
 }
-
+/* Invalid test. In a testing context, the executable name has what looks like a hash appended to it.
+The hash changes when you change the code.
+Unless there's a better way to test this, don't bother.
 #[cfg(test)]
 mod test {
     use super::*;
@@ -99,3 +101,4 @@ mod test {
         }
     }
 }
+*/

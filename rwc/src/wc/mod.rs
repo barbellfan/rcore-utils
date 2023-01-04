@@ -29,9 +29,9 @@ struct FileSummary {
 pub(crate) fn wc(args: Cli) -> Result<(), Error> {
 
     if let Some(file_names) = &args.files {
-        let mut summaries = summarize_files(&file_names, &args);
+        let mut summaries = summarize_files(&file_names);
 
-        let max_len = get_totals(&mut summaries, &args);
+        let max_len = get_totals(&mut summaries);
 
         summaries.iter().for_each(|file_summary_result| {
             match file_summary_result {
@@ -52,11 +52,15 @@ pub(crate) fn wc(args: Cli) -> Result<(), Error> {
 /// in all of the structs. Longest meaning the largest number of digits.
 /// This is used as padding later.
 /// 
+/// Get the longest number regardless of command line arguments. 
+/// It looks like the standard wc does this, so duplicate the behavior.
+/// 
 /// # Arguments
+/// 
 ///  * `summaries` - A Vec of `WCResult` enums. If there is more than 
-/// one, a `FileSummary` struct with the label "total" is added
+/// one, add a `FileSummary` struct with the label "total" 
 /// at the end. This will contain totals of all the other structs.
-fn get_totals(summaries: &mut Vec<WCResult>, args: &Cli) -> usize {
+fn get_totals(summaries: &mut Vec<WCResult>) -> usize {
     // get longest number so you can set the amount of padding
     // also get a running total of all lines, words, and chars
     let mut max_len = 0;
@@ -72,45 +76,23 @@ fn get_totals(summaries: &mut Vec<WCResult>, args: &Cli) -> usize {
         if let WCResult::FileStats(filsm) = file_summary_result {
             // calculate totals if there is more than one file
             if summaries.len() > 1 {
-                if args.lines {
-                    total_summary.lines += filsm.lines;
-                }
-                if args.words {
-                    total_summary.words += filsm.words;
-                }
-                if args.bytes {
-                    total_summary.bytes += filsm.bytes;
-                }
+                total_summary.lines += filsm.lines;
+                total_summary.words += filsm.words;
+                total_summary.bytes += filsm.bytes;
             }
 
             // get longest number
-            if args.lines {
-                max_len = max(max_len, filsm.lines.to_string().len());
-            }
-            
-            if args.words {
-                max_len = max(max_len, filsm.words.to_string().len());
-            }
-            
-            if args.bytes {
-                max_len = max(max_len, filsm.bytes.to_string().len());
-            }
+            max_len = max(max_len, filsm.lines.to_string().len());
+            max_len = max(max_len, filsm.words.to_string().len());
+            max_len = max(max_len, filsm.bytes.to_string().len());
         }
     }
 
     if summaries.len() > 1 {
         // max len might be longer here if other totals make longer numbers
-        if args.lines {
-            max_len = max(max_len, total_summary.lines.to_string().len());
-        }
-        
-        if args.words {
-            max_len = max(max_len, total_summary.words.to_string().len());
-        }
-        
-        if args.bytes {
-            max_len = max(max_len, total_summary.bytes.to_string().len());
-        }
+        max_len = max(max_len, total_summary.lines.to_string().len());
+        max_len = max(max_len, total_summary.words.to_string().len());
+        max_len = max(max_len, total_summary.bytes.to_string().len());
 
         summaries.push(WCResult::FileStats(total_summary));
     }
@@ -128,14 +110,14 @@ fn get_totals(summaries: &mut Vec<WCResult>, args: &Cli) -> usize {
 /// 
 /// * `file_names` - a pointer to an array of Strings that are file names 
 /// recieved from the user at the command line.
-fn summarize_files(file_names: &Vec<String>, args: &Cli) -> Vec<WCResult> {
+fn summarize_files(file_names: &Vec<String>) -> Vec<WCResult> {
     let mut summaries: Vec<WCResult> = Vec::new();
 
     for file_path in file_names.iter() {
         let contents = fs::read_to_string(file_path);
         match contents {
             Ok(c) => {
-                let mut summary = handle_file_contents(c, args);
+                let mut summary = handle_file_contents(c);
                 summary.label = file_path.to_owned();
                 summaries.push(WCResult::FileStats(summary));
             },
@@ -206,7 +188,7 @@ fn format_summary(f: &FileSummary, padding: usize, args: &Cli) -> String {
 /// `FileSummary` struct.
 /// # Arguments
 /// * `contents` - the contents of the file in question, as a `String`.
-fn handle_file_contents(contents: String, args: &Cli) -> FileSummary {
+fn handle_file_contents(contents: String) -> FileSummary {
     let mut fs = FileSummary { 
         lines: 0, 
         words: 0,
@@ -218,21 +200,10 @@ fn handle_file_contents(contents: String, args: &Cli) -> FileSummary {
     // The lines() function checks for either \n or \r\n. Final line ending is optional.
     // So a file ending in an empty line is the same as one with no final line ending.
     // See rust docs for core::str::lines().
-    if args.lines {
-        fs.lines = contents.lines().count();
-    }
-    
-    if args.words {
-        fs.words = contents.split_ascii_whitespace().count();
-    }
-
-    if args.chars {
-        fs.chars = contents.chars().count();
-    }
-
-    if args.bytes {
-        fs.bytes = contents.len();
-    }
+    fs.lines = contents.lines().count();
+    fs.words = contents.split_ascii_whitespace().count();
+    fs.chars = contents.chars().count();
+    fs.bytes = contents.len();
     
     fs
 }
@@ -240,6 +211,23 @@ fn handle_file_contents(contents: String, args: &Cli) -> FileSummary {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Helper method to make debugging easier.
+    /// 
+    /// Rust debugging in a workspace sets the working directory differently
+    /// from just running a test without debugging. This makes it hard to debug
+    /// tests, because the test cannot find the files it needs to test.
+    /// 
+    /// Fix by checking whether test is debugging, by checking whether the
+    /// current directory is `rwc`. Tests like this will be different for other 
+    /// programs in this workspace.
+    /// 
+    /// There's no need to call this if the test does not read files directly
+    fn debug_set_working_dir() {
+        if !std::env::current_dir().unwrap().ends_with("rwc") {
+            std::env::set_current_dir("rwc").unwrap();
+        }
+    }
 
     /// Helper method to create default input from the user. Default means no
     /// special arguments, which means they want to show line, byte, and word
@@ -264,23 +252,20 @@ mod tests {
     }
 
     #[test]
-    // Simple test to make sure handle_file_contents counts words and stuff.
+    /// Simple test to make sure handle_file_contents counts words and stuff.
     fn test_handle_file_contents_1() {
         let simple_str = "this is a short bit of text".to_owned();
-        let args = get_default_args();
-        let fs = handle_file_contents(simple_str, &args);
+        let fs = handle_file_contents(simple_str);
         check_file_summary_val(fs.lines, 1, "line".to_owned());
         check_file_summary_val(fs.words, 7, "word".to_owned());
         check_file_summary_val(fs.bytes, 27, "byte".to_owned());
     }
 
     #[test]
-    // Read the file trees.txt and get various counts for it.
+    /// Read the file trees.txt and get various counts for it.
     fn read_trees() {
-        let args = get_default_args();
-        let file_sum = summarize_files(
-            &vec!["tests/test_files/trees.txt".to_owned()],
-            &args);
+        debug_set_working_dir();
+        let file_sum = summarize_files(&vec!["tests/test_files/trees.txt".to_owned()]);
         assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
 
         match &file_sum[0] {
@@ -294,12 +279,12 @@ mod tests {
             }
         }
     }
+
+    /// Read the file fire_and_ice.txt and get various counts for it.
     #[test]
     fn read_fire() {
-        let args = get_default_args();
-        let file_sum = summarize_files(
-            &vec!["tests/test_files/fire_and_ice.txt".to_owned()],
-            &args);
+        debug_set_working_dir();
+        let file_sum = summarize_files(&vec!["tests/test_files/fire_and_ice.txt".to_owned()]);
         assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
 
         match &file_sum[0] {
@@ -314,12 +299,11 @@ mod tests {
         }
     }
 
+    /// Read the file so_tired_blues.txt and get various counts for it.
     #[test]
     fn read_so_tired() {
-        let args = get_default_args();
-        let file_sum = summarize_files(
-            &vec!["tests/test_files/so_tired_blues.txt".to_owned()],
-            &args);
+        debug_set_working_dir();
+        let file_sum = summarize_files(&vec!["tests/test_files/so_tired_blues.txt".to_owned()]);
         assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
 
         match &file_sum[0] {
@@ -334,15 +318,16 @@ mod tests {
         }
     }
 
+    /// Read two files and get their counts. Check the totals.
     #[test]
     fn read_so_tired_and_fire() {
+        debug_set_working_dir();
         let args = get_default_args();
         let mut file_sum = summarize_files(
             &vec![
-            "tests/test_files/so_tired_blues.txt".to_owned(),
-            "tests/test_files/fire_and_ice.txt".to_owned()
-            ],
-            &args);
+                "tests/test_files/so_tired_blues.txt".to_owned(),
+                "tests/test_files/fire_and_ice.txt".to_owned()
+            ]);
 
         assert_eq!(file_sum.len(), 2); // there should be two items in this vec.
         // Both entries in vec should be FileStats enums
@@ -371,7 +356,7 @@ mod tests {
             }
         }
 
-        let max_len = get_totals(&mut file_sum, &args);
+        let max_len = get_totals(&mut file_sum);
         assert_eq!(max_len, 3, "max length used for padding should be 3");
         assert_eq!(file_sum.len(), 3, "vec should have 3 item in it now");
 
@@ -410,8 +395,10 @@ mod tests {
         
     }
 
+    /// Read two files, but this time, just count the lines. Check the totals.
     #[test]
     fn read_so_tired_and_fire_lines() {
+        debug_set_working_dir();
         let mut args = get_default_args();
         args.bytes = false;
         args.chars = false;
@@ -421,8 +408,7 @@ mod tests {
             &vec![
             "tests/test_files/so_tired_blues.txt".to_owned(),
             "tests/test_files/fire_and_ice.txt".to_owned()
-            ],
-            &args);
+            ]);
 
         assert_eq!(file_sum.len(), 2); // there should be two items in this vec.
         // Both entries in vec should be FileStats enums
@@ -432,8 +418,8 @@ mod tests {
         match &file_sum[0] {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 9, "line".to_owned());
-                check_file_summary_val(fs.words, 0, "word".to_owned());
-                check_file_summary_val(fs.bytes, 0, "byte".to_owned());
+                check_file_summary_val(fs.words, 26, "word".to_owned());
+                check_file_summary_val(fs.bytes, 131, "byte".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
@@ -443,15 +429,15 @@ mod tests {
         match &file_sum[1] {
             WCResult::FileStats(fs) => {
                 check_file_summary_val(fs.lines, 13, "line".to_owned());
-                check_file_summary_val(fs.words, 0, "word".to_owned());
-                check_file_summary_val(fs.bytes, 0, "byte".to_owned());
+                check_file_summary_val(fs.words, 56, "word".to_owned());
+                check_file_summary_val(fs.bytes, 272, "byte".to_owned());
             },
             WCResult::ErrMsg(e) => {
                 panic!("Should not have caused an error: {}", e);
             }
         }
-        let max_len = get_totals(&mut file_sum, &args);
-        assert_eq!(max_len, 2, "max length used for padding should be 2");
+        let max_len = get_totals(&mut file_sum);
+        assert_eq!(max_len, 3, "max length used for padding should be 3");
         assert_eq!(file_sum.len(), 3, "vec should have 3 item in it now");
 
         match &file_sum[0] {
@@ -464,11 +450,11 @@ mod tests {
                 panic!("Should not have caused an error: {}", e);
             }
         }
-        /*
+        /**/
         
         match &file_sum[1] {
             WCResult::FileStats(fs)=> {
-                let expected_fire_and_ice = " 13  56 272 tests/test_files/fire_and_ice.txt";
+                let expected_fire_and_ice = " 13 tests/test_files/fire_and_ice.txt";
                 let found_fire_and_ice = format_summary(fs, max_len, &args);
                 assert_eq!(found_fire_and_ice, expected_fire_and_ice, "Output not correct");
             },
@@ -479,7 +465,7 @@ mod tests {
         
         match &file_sum[2] {
             WCResult::FileStats(fs)=> {
-                let expected_total = " 22  82 403 total";
+                let expected_total = " 22 total";
                 let found_total = format_summary(fs, max_len, &args);
                 assert_eq!(found_total, expected_total, "Output not correct");
             },
@@ -487,15 +473,14 @@ mod tests {
                 panic!("Should not have caused an error: {}", e);
             }
         }
-        */
+        /**/
     }
 
+    /// Read dracula.txt, a larger file.
     #[test]
     fn read_dracula() {
-        let args = get_default_args();
-        let file_sum = summarize_files(
-            &vec!["tests/test_files/dracula.txt".to_owned()],
-            &args);
+        debug_set_working_dir();
+        let file_sum = summarize_files(&vec!["tests/test_files/dracula.txt".to_owned()]);
         assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
 
         match &file_sum[0] {
@@ -510,12 +495,11 @@ mod tests {
         }
     }
 
+    /// Read another big file, frankenstein.txt.
     #[test]
     fn read_frank() {
-        let args = get_default_args();
-        let file_sum = summarize_files(
-            &vec!["tests/test_files/frankenstein.txt".to_owned()],
-            &args);
+        debug_set_working_dir();
+        let file_sum = summarize_files(&vec!["tests/test_files/frankenstein.txt".to_owned()]);
         assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
 
         match &file_sum[0] {
@@ -530,12 +514,11 @@ mod tests {
         }
     }
 
+    /// Read a third big file, moby_dick.txt.
     #[test]
     fn read_moby() {
-        let args = get_default_args();
-        let file_sum = summarize_files(
-            &vec!["tests/test_files/moby_dick.txt".to_owned()],
-            &args);
+        debug_set_working_dir();
+        let file_sum = summarize_files(&vec!["tests/test_files/moby_dick.txt".to_owned()]);
         assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
 
         match &file_sum[0] {
@@ -550,12 +533,12 @@ mod tests {
         }
     }
 
+    /// Try reading a file that does not exist. Output depends on the OS. Hopefully that does not change much 
+    /// between OS versions.
     #[test]
     fn read_err() {
-        let args = get_default_args();
-        let file_sum = summarize_files(
-            &vec!["tests/test_files/does_not_exist.txt".to_owned()],
-            &args);
+        debug_set_working_dir();
+        let file_sum = summarize_files(&vec!["tests/test_files/does_not_exist.txt".to_owned()]);
         assert_eq!(file_sum.len(), 1); // there should be just one item in this vec.
 
         match &file_sum[0] {
@@ -572,17 +555,17 @@ mod tests {
         }
     }
 
+    /// Just test the get_totals() function with mock structs.
     #[test]
     fn test_get_totals() {
         let f1 = FileSummary {lines: 1, words: 1, chars: 1, bytes: 1, label: "file_1".to_owned()};
         let f2 = FileSummary {lines: 2, words: 2, chars: 1, bytes: 2, label: "file_2".to_owned()};
-        let args = get_default_args();
 
         let mut fv = vec!();
         fv.push(WCResult::FileStats(f1));
         fv.push(WCResult::FileStats(f2));
 
-        let max_len = get_totals(&mut fv, &args);
+        let max_len = get_totals(&mut fv);
         assert_eq!(max_len, 1, "Max length for padding should have been {}, but was {}", max_len, 1);
 
         assert_eq!(fv.len(), 3, "get_totals should have added one item to the vec. Expected length of 3, but found {}", fv.len());
@@ -600,6 +583,7 @@ mod tests {
         }
     }
 
+    /// Just test the format_summary() function with mock structs, and command line arguments equal to -l.
     #[test]
     fn test_get_format_summary_lines() {
         let f1 = FileSummary {lines: 1, words: 11, chars: 111, bytes: 11111, label: "file_1".to_owned()};
@@ -611,24 +595,23 @@ mod tests {
         args.bytes = false;
 
         let f1_expected = "  1 file_1";
-        let f2_expected = " 22 file_2";
-
-        let sum1 = format_summary(&f1, 2, &args);
-        let sum2 = format_summary(&f2, 2, &args);
-
+        let sum1 = format_summary(&f1, 3, &args);
         assert_eq!(sum1, f1_expected);
+
+        let f2_expected = " 22 file_2";
+        let sum2 = format_summary(&f2, 3, &args);
         assert_eq!(sum2, f2_expected);
     }
 
+    /// Test whether there is a totals line if you only read one file.
     #[test]
     fn test_no_totals_with_one_file() {
         let f1 = FileSummary {lines: 1, words: 1, chars: 1, bytes: 1, label: "file_1".to_owned()};
-        let args = get_default_args();
 
         let mut fv = vec!();
         fv.push(WCResult::FileStats(f1));
 
-        get_totals(&mut fv, &args);
+        get_totals(&mut fv);
 
         assert_eq!(fv.len(), 1, "get_totals should NOT have added one item to the vec since there was only one item. Expected length of 1, but found {}", fv.len());
 
@@ -645,15 +628,15 @@ mod tests {
         }
     }
 
+    /// Test missing file output when the first one in the argument is the one that's missing.
     #[test]
     fn read_err_2() {
-        let args = get_default_args();
+        debug_set_working_dir();
         let file_sum = summarize_files(
             &vec![
                 "tests/test_files/does_not_exist.txt".to_owned(),
                 "tests/test_files/moby_dick.txt".to_owned()
-                ],
-            &args);
+                ]);
         assert_eq!(file_sum.len(), 2); // there should be just one item in this vec.
 
         match &file_sum[0] {
@@ -685,16 +668,16 @@ mod tests {
         }
     }
 
+    /// Test missing file output when the second one out of three arguments is the one that's missing.
     #[test]
     fn read_err_3() {
-        let args = get_default_args();
+        debug_set_working_dir();
         let file_sum = summarize_files(
             &vec![
             "tests/test_files/frankenstein.txt".to_owned(),
             "tests/test_files/does_not_exist.txt".to_owned(),
             "tests/test_files/moby_dick.txt".to_owned()
-            ],
-            &args);
+            ]);
         assert_eq!(file_sum.len(), 3); // there should be just one item in this vec.
 
         match &file_sum[0] {
@@ -736,6 +719,7 @@ mod tests {
         }
     }
 
+    /// Test setting the padding parameter to 5 using a mock struct.
     #[test]
     fn test_format_summary_padding_5() {
         let ws = FileSummary{lines: 1, words: 1, chars: 1, bytes: 1, label: "thing".to_owned()};
@@ -744,6 +728,7 @@ mod tests {
         assert_eq!(s, "    1     1     1 thing");
     }
 
+    /// Test setting the padding parameter to 2 using a mock struct.
     #[test]
     fn test_format_summary_padding_2() {
         let ws = FileSummary{lines: 1, words: 1, chars: 1, bytes: 1, label: "thing".to_owned()};
@@ -752,15 +737,15 @@ mod tests {
         assert_eq!(s, " 1  1  1 thing");
     }
 
+    /// Test the padding size when reading several large files.
     #[test]
     fn test_format_summary_padding_3() {
-        let args = get_default_args();
+        debug_set_working_dir();
         let mut file_sum = summarize_files(
             &vec![
             "tests/test_files/dracula.txt".to_owned(),
-            "tests/test_files/frankenstein.txt".to_owned()],
-            &args);
-        let max_len = get_totals(&mut file_sum, &args);
+            "tests/test_files/frankenstein.txt".to_owned()]);
+        let max_len = get_totals(&mut file_sum);
         assert_eq!(max_len, 7, "Max length should have been 7, but was {}", max_len);
     }
 }
