@@ -422,7 +422,7 @@ mod test {
     /// ```
     /// Make the output look like that.
     #[test]
-    fn read_moby_and_bummer() -> Result<(), Box<dyn std::error::Error>>{
+    fn read_moby_and_bummer_words() -> Result<(), Box<dyn std::error::Error>>{
         let expected = concat!(
             " 215864 tests/test_files/moby_dick.txt\n",
             "      2 tests/test_files/bummer_dude.txt\n",
@@ -433,6 +433,39 @@ mod test {
         cmd.arg("tests/test_files/moby_dick.txt")
             .arg("tests/test_files/bummer_dude.txt")
             .arg("-w")
+            .assert()
+            .success()
+            .stdout(predicate::eq(expected))
+            .code(predicate::eq(0));
+        
+        Ok(())
+    }
+    
+    /// Run wc with one big file, and one file with two words separated
+    /// by and lots of empty lines.
+    /// Count bytes only with the `-c` switch:
+    /// ```
+    /// :~$  wc moby_dick.txt bummer_dude.txt -c
+    /// ```
+    /// Output from wc looks like this:
+    /// ```
+    /// 1276231 moby_dick.txt
+    ///     110 bummer_dude.txt
+    /// 1276341 total
+    /// ```
+    /// Make the output look like that.
+    #[test]
+    fn read_moby_and_bummer_bytes() -> Result<(), Box<dyn std::error::Error>>{
+        let expected = concat!(
+            "1276231 tests/test_files/moby_dick.txt\n",
+            "    110 tests/test_files/bummer_dude.txt\n",
+            "1276341 total\n"
+        );
+
+        let mut cmd = get_cmd();
+        cmd.arg("tests/test_files/moby_dick.txt")
+            .arg("tests/test_files/bummer_dude.txt")
+            .arg("-c")
             .assert()
             .success()
             .stdout(predicate::eq(expected))
