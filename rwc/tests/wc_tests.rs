@@ -375,4 +375,36 @@ mod test {
         
         Ok(())
     }
+    /// Run wc with one big file, and one file with a really long line.
+    /// Count words only with the `-w` switch:
+    /// ```
+    /// :~$  wc moby_dick.txt jack.txt -w
+    /// ```
+    /// Output from wc looks like this:
+    /// ```
+    ///  215864 moby_dick.txt
+    ///     240 jack.txt
+    ///  216104 total
+    /// ```
+    /// Make the output look like that.
+    #[test]
+    fn read_moby_and_jack() -> Result<(), Box<dyn std::error::Error>>{
+        let expected = concat!(
+            " 215864 tests/test_files/moby_dick.txt\n",
+            "    240 tests/test_files/jack.txt\n",
+            " 216104 total\n"
+        );
+
+        let mut cmd = get_cmd();
+        cmd.arg("tests/test_files/moby_dick.txt")
+            .arg("tests/test_files/jack.txt")
+            .arg("-w")
+            .assert()
+            .success()
+            .stdout(predicate::eq(expected))
+            .code(predicate::eq(0));
+        
+        Ok(())
+    }
+
 }
