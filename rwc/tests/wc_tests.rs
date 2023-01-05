@@ -343,4 +343,36 @@ mod test {
 
         Ok(())
     }
+
+    /// Run wc with one big file, and one file with a single character and a bunch of empty lines.
+    /// Count words only with the `-w` switch:
+    /// ```
+    /// :~$  wc moby_dick.txt one_char.txt -w
+    /// ```
+    /// Output from wc looks like this:
+    /// ```
+    ///  215864 moby_dick.txt
+    ///       1 one_char.txt
+    ///  215865 total
+    /// ```
+    /// Make the output look like that.
+    #[test]
+    fn read_moby_and_one_char() -> Result<(), Box<dyn std::error::Error>>{
+        let expected = concat!(
+            " 215864 tests/test_files/moby_dick.txt\n",
+            "      1 tests/test_files/one_char.txt\n",
+            " 215865 total\n"
+        );
+
+        let mut cmd = get_cmd();
+        cmd.arg("tests/test_files/moby_dick.txt")
+            .arg("tests/test_files/one_char.txt")
+            .arg("-w")
+            .assert()
+            .success()
+            .stdout(predicate::eq(expected))
+            .code(predicate::eq(0));
+        
+        Ok(())
+    }
 }
