@@ -78,12 +78,14 @@ fn get_totals(summaries: &mut Vec<WCResult>) -> usize {
             if summaries.len() > 1 {
                 total_summary.lines += filsm.lines;
                 total_summary.words += filsm.words;
+                total_summary.chars += filsm.chars;
                 total_summary.bytes += filsm.bytes;
             }
 
             // get longest number
             max_len = max(max_len, filsm.lines.to_string().len());
             max_len = max(max_len, filsm.words.to_string().len());
+            max_len = max(max_len, filsm.chars.to_string().len());
             max_len = max(max_len, filsm.bytes.to_string().len());
         }
     }
@@ -92,6 +94,7 @@ fn get_totals(summaries: &mut Vec<WCResult>) -> usize {
         // max len might be longer here if other totals make longer numbers
         max_len = max(max_len, total_summary.lines.to_string().len());
         max_len = max(max_len, total_summary.words.to_string().len());
+        max_len = max(max_len, total_summary.chars.to_string().len());
         max_len = max(max_len, total_summary.bytes.to_string().len());
 
         summaries.push(WCResult::FileStats(total_summary));
@@ -170,6 +173,7 @@ fn summarize_files(file_names: &Vec<String>) -> Vec<WCResult> {
 fn format_summary(f: &FileSummary, padding: usize, args: &Cli) -> String {
     let mut lines_count = "".to_owned();
     let mut words_count = "".to_owned();
+    let mut chars_count = "".to_owned();
     let mut bytes_count = "".to_owned();
 
     if args.lines {
@@ -178,10 +182,13 @@ fn format_summary(f: &FileSummary, padding: usize, args: &Cli) -> String {
     if args.words {
         words_count = format!("{:>padding$} ", f.words);
     }
+    if args.chars {
+        chars_count = format!("{:>padding$} ", f.chars);
+    }
     if args.bytes {
         bytes_count = format!("{:>padding$} ", f.bytes);
     }
-    format!("{}{}{}{}", lines_count, words_count, bytes_count, f.label)
+    format!("{}{}{}{}{}", lines_count, words_count, chars_count, bytes_count, f.label)
 }
 
 /// Utility function to count lines, words, and bytes in the given file. Return a 

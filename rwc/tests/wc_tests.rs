@@ -522,7 +522,7 @@ mod test {
         );
 
         let mut cmd = get_cmd();
-        cmd.arg("tests/test_files/frank enstein.txt")
+        cmd.arg("tests/test_files/frankenstein.txt")
             .arg("tests/test_files/dracula.txt")
             .arg("-m")
             .assert()
@@ -570,7 +570,7 @@ mod test {
     /// Make the output look like that.
     #[test]
     fn chars_and_byte_count_diff() -> Result<(), Box<dyn std::error::Error>> {
-        let expected = "881118 881220 dracula.txt\n";
+        let expected = "881118 881220 tests/test_files/dracula.txt\n";
 
         let mut cmd = get_cmd();
         cmd.arg("tests/test_files/dracula.txt")

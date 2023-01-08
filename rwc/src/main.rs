@@ -43,7 +43,7 @@ fn main() -> Result<(), Error> {
     let mut clap_args = Cli::parse();
 
     // if all are set to false, then none were set on the command line
-    // set all but bytes to true
+    // set all but chars to true
     if clap_args.lines == false 
         && clap_args.bytes == false 
         && clap_args.words == false
